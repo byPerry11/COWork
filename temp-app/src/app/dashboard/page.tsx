@@ -11,7 +11,6 @@ import { ProjectList } from "@/components/project-list"
 import { AppSidebar } from "@/components/app-sidebar"
 import { StatsCards } from "@/components/stats-cards"
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context"
-import { UserSearch } from "@/components/user-search"
 
 function DashboardContent() {
   const router = useRouter()
@@ -140,7 +139,6 @@ function DashboardContent() {
                     </p>
                 </div>
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full md:w-auto">
-                    <UserSearch />
                     <CreateProjectDialog onSuccess={handleProjectCreated} />
                 </div>
             </div>

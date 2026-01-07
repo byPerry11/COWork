@@ -102,10 +102,9 @@ export default function LoginPage() {
         })
         if (error) throw error
 
-        toast.success("Account created!", {
-          description: "Please check your email if verification is required, or sign in."
-        })
-        setIsSignUp(false)
+        if (error) throw error
+        
+        router.push("/verify-email")
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: values.email,

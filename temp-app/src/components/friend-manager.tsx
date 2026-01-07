@@ -1,14 +1,12 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, UserPlus, Check, X, Search, User } from "lucide-react"
+import { Loader2, Check, X, User } from "lucide-react"
 import { toast } from "sonner"
+import { UserSearch } from "@/components/user-search"
 
 interface Profile {
     id: string
@@ -27,10 +25,6 @@ interface FriendRequest {
 }
 
 export function FriendManager({ userId }: { userId: string }) {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [searchResults, setSearchResults] = useState<Profile[]>([])
-    const [searching, setSearching] = useState(false)
-    
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [friends, setFriends] = useState<Profile[]>([])
     const [requests, setRequests] = useState<FriendRequest[]>([])
@@ -87,63 +81,6 @@ export function FriendManager({ userId }: { userId: string }) {
         fetchData()
     }, [fetchData])
 
-    const handleSearch = async () => {
-        if (!searchQuery.trim()) return
-        setSearching(true)
-        try {
-            // Remove leading @ if present
-            const query = searchQuery.trim().startsWith('@') 
-                ? searchQuery.trim().slice(1) 
-                : searchQuery.trim()
-
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('id, username, display_name, avatar_url')
-                .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-                .neq('id', userId) // Don't show myself
-                .limit(10)
-            
-            if (error) throw error
-            setSearchResults(data || [])
-        } catch (error: any) {
-            toast.error("Search failed", { description: error.message })
-        } finally {
-            setSearching(false)
-        }
-    }
-
-    const sendRequest = async (targetId: string) => {
-        try {
-            // Check if request already exists
-            const { data: existing } = await supabase
-                .from('friend_requests')
-                .select('id, status')
-                .or(`and(sender_id.eq.${userId},receiver_id.eq.${targetId}),and(sender_id.eq.${targetId},receiver_id.eq.${userId})`)
-                .maybeSingle()
-
-            if (existing) {
-                if (existing.status === 'pending') toast.error("Request already pending")
-                else if (existing.status === 'accepted') toast.info("Already friends")
-                return
-            }
-
-            const { error } = await supabase
-                .from('friend_requests')
-                .insert({
-                    sender_id: userId,
-                    receiver_id: targetId,
-                    status: 'pending'
-                })
-
-            if (error) throw error
-            toast.success("Friend request sent!")
-            setSearchResults([]) // Clear search to avoid spam
-            setSearchQuery("")
-        } catch (error: any) {
-            toast.error("Failed to send request", { description: error.message })
-        }
-    }
-
     const handleResponse = async (requestId: string, status: 'accepted' | 'rejected') => {
         try {
             const { error } = await supabase
@@ -165,44 +102,10 @@ export function FriendManager({ userId }: { userId: string }) {
             <Card>
                 <CardHeader>
                     <CardTitle>Find Friends</CardTitle>
-                    <CardDescription>Search for users by username or email to connect.</CardDescription>
+                    <CardDescription>Search for users by username or display name to connect.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex gap-2">
-                        <Input 
-                            placeholder="Search by username..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        />
-                        <Button onClick={handleSearch} disabled={searching}>
-                            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                        </Button>
-                    </div>
-
-                    {/* Search Results */}
-                    {searchResults.length > 0 && (
-                        <div className="mt-4 space-y-2 border rounded-md p-2">
-                            {searchResults.map((profile) => (
-                                <div key={profile.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarImage src={profile.avatar_url || ""} />
-                                            <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">{profile.display_name || profile.username}</span>
-                                            <span className="text-xs text-muted-foreground">@{profile.username}</span>
-                                        </div>
-                                    </div>
-                                    <Button size="sm" variant="secondary" onClick={() => sendRequest(profile.id)}>
-                                        <UserPlus className="h-4 w-4 mr-2" />
-                                        Add
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <UserSearch />
                 </CardContent>
             </Card>
 
