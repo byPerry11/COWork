@@ -3,17 +3,20 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { Loader2 } from "lucide-react"
+import { Loader2, Menu } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { ProjectList } from "@/components/project-list"
 import { AppSidebar } from "@/components/app-sidebar"
 import { StatsCards } from "@/components/stats-cards"
+import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context"
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const { toggle } = useSidebar()
 
   const [stats, setStats] = useState({
     totalProjects: 0,
@@ -40,7 +43,6 @@ export default function DashboardPage() {
   // 2. Fetch Stats
   const fetchStats = async (uid: string) => {
     try {
-      // Flattened query to get all projects user is involved in + their checkpoints
       const { data, error } = await supabase
         .from("project_members")
         .select(`
@@ -75,7 +77,6 @@ export default function DashboardPage() {
         const pCompleted = checks.filter((c: any) => c.is_completed).length
 
         totalTasks += pTotal
-        // Pending = Total - Completed (globally)
 
         if (pTotal > 0) {
           sumProgress += (pCompleted / pTotal) * 100
@@ -115,19 +116,28 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
       <AppSidebar />
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-6 space-y-8">
-          {/* Header */}
+        <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
+          {/* Header with mobile menu button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-              <p className="text-muted-foreground">
-                Overview of your projects and performance.
-              </p>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggle}
+                className="md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <div className="flex-1">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Overview of your projects and performance.
+                </p>
+              </div>
             </div>
             <CreateProjectDialog onSuccess={handleProjectCreated} />
           </div>
@@ -142,11 +152,19 @@ export default function DashboardPage() {
 
           {/* Project List */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">Your Projects</h2>
+            <h2 className="text-lg md:text-xl font-semibold tracking-tight">Your Projects</h2>
             {userId && <ProjectList userId={userId} key={refreshKey} />}
           </div>
         </div>
       </main>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <SidebarProvider>
+      <DashboardContent />
+    </SidebarProvider>
   )
 }

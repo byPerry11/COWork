@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { Loader2, User, Award, ArrowLeft } from "lucide-react"
+import { Loader2, User, Award, ArrowLeft, Menu } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,11 +11,14 @@ import { ProfileEditForm } from "@/components/profile-edit-form"
 import { AvatarUpload } from "@/components/avatar-upload"
 import { AchievementsDisplay } from "@/components/achievements-display"
 import { UserInfo } from "@/components/user-info"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context"
 
-export default function ProfilePage() {
+function ProfileContent() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [userId, setUserId] = useState<string | null>(null)
+    const { toggle } = useSidebar()
 
     useEffect(() => {
         const checkUser = async () => {
@@ -40,19 +43,34 @@ export default function ProfilePage() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+            <AppSidebar />
+
             <main className="flex-1 overflow-y-auto">
-                <div className="container mx-auto p-6 space-y-8 max-w-4xl">
+                <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8 max-w-4xl">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
-                            <p className="text-muted-foreground">
-                                Gestiona tu información personal y logros
-                            </p>
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 flex-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={toggle}
+                                className="md:hidden"
+                            >
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                            <div className="flex-1">
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mi Perfil</h1>
+                                <p className="text-sm md:text-base text-muted-foreground">
+                                    Gestiona tu información personal y logros
+                                </p>
+                            </div>
                         </div>
-                        <Button variant="outline" onClick={() => router.push("/dashboard")}>
+                        <Button variant="outline" onClick={() => router.push("/dashboard")} className="hidden sm:flex">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Volver al Home
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={() => router.push("/dashboard")} className="sm:hidden">
+                            <ArrowLeft className="h-4 w-4" />
                         </Button>
                     </div>
 
@@ -114,5 +132,13 @@ export default function ProfilePage() {
                 </div>
             </main>
         </div>
+    )
+}
+
+export default function ProfilePage() {
+    return (
+        <SidebarProvider>
+            <ProfileContent />
+        </SidebarProvider>
     )
 }

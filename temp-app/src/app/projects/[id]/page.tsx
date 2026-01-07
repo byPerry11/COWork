@@ -3,17 +3,20 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CheckpointList } from "@/components/checkpoint-list"
 import { AddCheckpointDialog } from "@/components/add-checkpoint-dialog"
 import { ManageMembersDialog } from "@/components/manage-members-dialog"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context"
 import { Project } from "@/types"
 
-export default function ProjectDetailPage() {
+function ProjectDetailContent() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
+  const { toggle } = useSidebar()
 
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,11 +32,11 @@ export default function ProjectDetailPage() {
           .single()
 
         if (error) {
-            console.error("Error fetching project:", error)
-             if (!data) router.push("/dashboard")
-             return
+          console.error("Error fetching project:", error)
+          if (!data) router.push("/dashboard")
+          return
         }
-        
+
         setProject(data)
       } catch (err) {
         console.error("Unexpected error:", err)
@@ -48,7 +51,7 @@ export default function ProjectDetailPage() {
   }, [id, router])
 
   const handleCheckpointAdded = () => {
-      setRefreshKey(prev => prev + 1)
+    setRefreshKey(prev => prev + 1)
   }
 
   if (loading) {
@@ -60,32 +63,57 @@ export default function ProjectDetailPage() {
   }
 
   if (!project) {
-      return (
-          <div className="flex h-screen flex-col items-center justify-center gap-4">
-              <h1 className="text-xl font-bold">Project Not Found</h1>
-              <Button onClick={() => router.push("/dashboard")}>Return to Dashboard</Button>
-          </div>
-      )
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4">
+        <h1 className="text-xl font-bold">Project Not Found</h1>
+        <Button onClick={() => router.push("/dashboard")}>Return to Dashboard</Button>
+      </div>
+    )
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-      <header className="sticky top-0 z-10 border-b bg-white px-6 py-4 dark:bg-gray-950 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")}>
-                <ArrowLeft className="h-4 w-4" />
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+      <AppSidebar />
+
+      <div className="flex flex-1 flex-col">
+        <header className="sticky top-0 z-10 border-b bg-white px-4 md:px-6 py-4 dark:bg-gray-950 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              className="md:hidden shrink-0"
+            >
+              <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">{project.title}</h1>
-        </div>
-        <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg md:text-xl font-bold truncate">{project.title}</h1>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <ManageMembersDialog projectId={project.id} />
             <AddCheckpointDialog projectId={project.id} onSuccess={handleCheckpointAdded} />
-        </div>
-      </header>
+          </div>
+        </header>
 
-      <main className="flex-1 p-6">
-        <CheckpointList projectId={project.id} key={refreshKey} />
-      </main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <CheckpointList projectId={project.id} key={refreshKey} />
+        </main>
+      </div>
     </div>
+  )
+}
+
+export default function ProjectDetailPage() {
+  return (
+    <SidebarProvider>
+      <ProjectDetailContent />
+    </SidebarProvider>
   )
 }
