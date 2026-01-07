@@ -56,6 +56,10 @@ interface Member {
 export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     const [open, setOpen] = useState(false)
     const [friends, setFriends] = useState<{ id: string, username: string | null, display_name: string | null }[]>([])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [members, setMembers] = useState<Member[]>([])
+    const [loading, setLoading] = useState(false)
+    const [adding, setAdding] = useState(false)
 
     const form = useForm<z.infer<typeof memberSchema>>({
         resolver: zodResolver(memberSchema),
