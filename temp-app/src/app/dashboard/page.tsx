@@ -142,6 +142,12 @@ function DashboardContent() {
             <CreateProjectDialog onSuccess={handleProjectCreated} />
           </div>
 
+          {/* Project List */}
+          <div className="space-y-4">
+            <h2 className="text-lg md:text-xl font-semibold tracking-tight">Your Projects</h2>
+            {userId && <ProjectList userId={userId} key={refreshKey} />}
+          </div>
+
           {/* Stats Cards */}
           <StatsCards
             totalProjects={stats.totalProjects}
@@ -149,12 +155,6 @@ function DashboardContent() {
             pendingTasks={stats.pendingTasks}
             avgProgress={stats.avgProgress}
           />
-
-          {/* Project List */}
-          <div className="space-y-4">
-            <h2 className="text-lg md:text-xl font-semibold tracking-tight">Your Projects</h2>
-            {userId && <ProjectList userId={userId} key={refreshKey} />}
-          </div>
         </div>
       </main>
     </div>
