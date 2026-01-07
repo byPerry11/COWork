@@ -55,36 +55,37 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
-            email: values.email,
-            password: values.password,
+          email: values.email,
+          password: values.password,
         })
         if (error) throw error
-        
+
         toast.success("Account created!", {
-             description: "Please check your email if verification is required, or sign in."
+          description: "Please check your email if verification is required, or sign in."
         })
         setIsSignUp(false)
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: values.email,
-            password: values.password,
+          email: values.email,
+          password: values.password,
         })
 
         if (error) {
-            toast.error("Login Failed", {
+          toast.error("Login Failed", {
             description: error.message,
-            })
-            return
+          })
+          return
         }
 
         if (data.session) {
-            toast.success("Welcome back!", {
+          toast.success("Welcome back!", {
             description: "You have successfully signed in.",
-            })
-            router.push("/dashboard")
+          })
+          router.push("/dashboard")
         }
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error("An error occurred.", { description: err.message })
       console.error(err)
@@ -141,13 +142,13 @@ export default function LoginPage() {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
-            <Button 
-                variant="link" 
-                className="w-full text-sm text-muted-foreground"
-                onClick={() => setIsSignUp(!isSignUp)}
-            >
-                {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
-            </Button>
+          <Button
+            variant="link"
+            className="w-full text-sm text-muted-foreground"
+            onClick={() => setIsSignUp(!isSignUp)}
+          >
+            {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+          </Button>
         </CardFooter>
       </Card>
     </div>

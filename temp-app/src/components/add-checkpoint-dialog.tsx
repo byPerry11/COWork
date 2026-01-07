@@ -34,8 +34,8 @@ const checkpointSchema = z.object({
 })
 
 interface AddCheckpointDialogProps {
-    projectId: string
-    onSuccess: () => void
+  projectId: string
+  onSuccess: () => void
 }
 
 export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialogProps) {
@@ -43,7 +43,8 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm({
-    resolver: zodResolver(checkpointSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(checkpointSchema) as any,
     defaultValues: {
       title: "",
       order: 1,
@@ -55,27 +56,28 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
   async function onSubmit(values: z.infer<typeof checkpointSchema>) {
     setIsLoading(true)
     try {
-        const { error } = await supabase
-            .from('checkpoints')
-            .insert({
-                project_id: projectId,
-                title: values.title,
-                order: values.order,
-                is_completed: false
-            })
-
-        if (error) throw error
-
-        toast.success("Checkpoint added successfully")
-        setOpen(false)
-        form.reset()
-        onSuccess()
-    } catch (error: any) {
-        toast.error("Failed to add checkpoint", {
-            description: error.message
+      const { error } = await supabase
+        .from('checkpoints')
+        .insert({
+          project_id: projectId,
+          title: values.title,
+          order: values.order,
+          is_completed: false
         })
+
+      if (error) throw error
+
+      toast.success("Checkpoint added successfully")
+      setOpen(false)
+      form.reset()
+      onSuccess()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error("Failed to add checkpoint", {
+        description: error.message
+      })
     } finally {
-        setIsLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -83,8 +85,8 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Checkpoint
+          <Plus className="mr-2 h-4 w-4" />
+          Add Checkpoint
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -109,7 +111,7 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="order"

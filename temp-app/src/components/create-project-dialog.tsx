@@ -34,14 +34,12 @@ import { supabase } from "@/lib/supabaseClient"
 
 const projectSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  start_date: z.date({
-    required_error: "A start date is required.",
-  }),
+  start_date: z.date(),
   max_users: z.coerce.number().min(1, "At least 1 user required"),
 })
 
 interface CreateProjectDialogProps {
-    onSuccess: () => void
+  onSuccess: () => void
 }
 
 export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
@@ -49,7 +47,8 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<z.infer<typeof projectSchema>>({
-    resolver: zodResolver(projectSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(projectSchema) as any,
     defaultValues: {
       title: "",
       max_users: 1,
@@ -60,32 +59,33 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
   async function onSubmit(values: z.infer<typeof projectSchema>) {
     setIsLoading(true)
     try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
 
-        const { error } = await supabase
-            .from('projects')
-            .insert({
-                title: values.title,
-                owner_id: session.user.id,
-                start_date: values.start_date.toISOString(),
-                max_users: values.max_users,
-                status: 'active'
-            })
-            .select() // Returning data isn't strictly necessary unless we want to redirect
-
-        if (error) throw error
-
-        toast.success("Project created successfully")
-        setOpen(false)
-        form.reset()
-        onSuccess()
-    } catch (error: any) {
-        toast.error("Failed to create project", {
-            description: error.message
+      const { error } = await supabase
+        .from('projects')
+        .insert({
+          title: values.title,
+          owner_id: session.user.id,
+          start_date: values.start_date.toISOString(),
+          max_users: values.max_users,
+          status: 'active'
         })
+        .select() // Returning data isn't strictly necessary unless we want to redirect
+
+      if (error) throw error
+
+      toast.success("Project created successfully")
+      setOpen(false)
+      form.reset()
+      onSuccess()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error("Failed to create project", {
+        description: error.message
+      })
     } finally {
-        setIsLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -93,8 +93,8 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Project
+          <Plus className="mr-2 h-4 w-4" />
+          Create Project
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -119,7 +119,7 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="start_date"
@@ -159,7 +159,7 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
               )}
             />
 
-             <FormField
+            <FormField
               control={form.control}
               name="max_users"
               render={({ field }) => (

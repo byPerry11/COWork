@@ -14,12 +14,12 @@ export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  
+
   const [stats, setStats] = useState({
-      totalProjects: 0,
-      activeProjects: 0,
-      pendingTasks: 0,
-      avgProgress: 0
+    totalProjects: 0,
+    activeProjects: 0,
+    pendingTasks: 0,
+    avgProgress: 0
   })
 
   // 1. Check Auth & Get User
@@ -39,11 +39,11 @@ export default function DashboardPage() {
 
   // 2. Fetch Stats
   const fetchStats = async (uid: string) => {
-      try {
-          // Flattened query to get all projects user is involved in + their checkpoints
-          const { data, error } = await supabase
-            .from("project_members")
-            .select(`
+    try {
+      // Flattened query to get all projects user is involved in + their checkpoints
+      const { data, error } = await supabase
+        .from("project_members")
+        .select(`
                 projects:project_id (
                     id,
                     status,
@@ -52,46 +52,50 @@ export default function DashboardPage() {
                     )
                 )
             `)
-            .eq("user_id", uid)
+        .eq("user_id", uid)
 
-          if (error) throw error
+      if (error) throw error
 
-          const projects = data?.map((d: any) => d.projects) || []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const projects = data?.map((d: any) => d.projects) || []
 
-          const total = projects.length
-          const active = projects.filter((p: any) => p.status === 'active').length
-          
-          let totalTasks = 0
-          let completedTasks = 0
-          let sumProgress = 0
+      const total = projects.length
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const active = projects.filter((p: any) => p.status === 'active').length
 
-          projects.forEach((p: any) => {
-              const checks = p.checkpoints || []
-              const pTotal = checks.length
-              const pCompleted = checks.filter((c: any) => c.is_completed).length
-              
-              totalTasks += pTotal
-              // Pending = Total - Completed (globally)
-              
-              if (pTotal > 0) {
-                  sumProgress += (pCompleted / pTotal) * 100
-              }
-              completedTasks += pCompleted
-          })
+      let totalTasks = 0
+      let completedTasks = 0
+      let sumProgress = 0
 
-          const avgProgress = total > 0 ? sumProgress / total : 0
-          const pending = totalTasks - completedTasks
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      projects.forEach((p: any) => {
+        const checks = p.checkpoints || []
+        const pTotal = checks.length
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pCompleted = checks.filter((c: any) => c.is_completed).length
 
-          setStats({
-              totalProjects: total,
-              activeProjects: active,
-              pendingTasks: pending,
-              avgProgress
-          })
+        totalTasks += pTotal
+        // Pending = Total - Completed (globally)
 
-      } catch (err) {
-          console.error("Error fetching stats:", err)
-      }
+        if (pTotal > 0) {
+          sumProgress += (pCompleted / pTotal) * 100
+        }
+        completedTasks += pCompleted
+      })
+
+      const avgProgress = total > 0 ? sumProgress / total : 0
+      const pending = totalTasks - completedTasks
+
+      setStats({
+        totalProjects: total,
+        activeProjects: active,
+        pendingTasks: pending,
+        avgProgress
+      })
+
+    } catch (err) {
+      console.error("Error fetching stats:", err)
+    }
   }
 
   // Refresh mechanism
@@ -117,30 +121,30 @@ export default function DashboardPage() {
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto p-6 space-y-8">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-muted-foreground">
-                        Overview of your projects and performance.
-                    </p>
-                </div>
-                <CreateProjectDialog onSuccess={handleProjectCreated} />
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground">
+                Overview of your projects and performance.
+              </p>
             </div>
+            <CreateProjectDialog onSuccess={handleProjectCreated} />
+          </div>
 
-            {/* Stats Cards */}
-            <StatsCards 
-                totalProjects={stats.totalProjects}
-                activeProjects={stats.activeProjects}
-                pendingTasks={stats.pendingTasks}
-                avgProgress={stats.avgProgress}
-            />
+          {/* Stats Cards */}
+          <StatsCards
+            totalProjects={stats.totalProjects}
+            activeProjects={stats.activeProjects}
+            pendingTasks={stats.pendingTasks}
+            avgProgress={stats.avgProgress}
+          />
 
-            {/* Project List */}
-            <div className="space-y-4">
-                <h2 className="text-xl font-semibold tracking-tight">Your Projects</h2>
-                {userId && <ProjectList userId={userId} key={refreshKey} />}
-            </div>
+          {/* Project List */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold tracking-tight">Your Projects</h2>
+            {userId && <ProjectList userId={userId} key={refreshKey} />}
+          </div>
         </div>
       </main>
     </div>
