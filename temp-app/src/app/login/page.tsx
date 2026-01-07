@@ -28,6 +28,20 @@ import {
 } from "@/components/ui/form"
 import { supabase } from "@/lib/supabaseClient"
 
+// Allowed email domains for registration
+const ALLOWED_EMAIL_DOMAINS = [
+  'gmail.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'yahoo.com',
+  'icloud.com',
+  'protonmail.com',
+  'pm.me',
+  'aol.com',
+  'zoho.com',
+]
+
 const loginSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
@@ -50,6 +64,13 @@ const signUpSchema = loginSchema.extend({
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
+}).refine((data) => {
+  // Extract domain from email
+  const emailDomain = data.email.split('@')[1]?.toLowerCase()
+  return ALLOWED_EMAIL_DOMAINS.includes(emailDomain)
+}, {
+  message: "Please use a conventional email provider (Gmail, Outlook, Yahoo, etc.)",
+  path: ["email"],
 })
 
 export default function LoginPage() {
