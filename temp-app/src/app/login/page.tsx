@@ -57,7 +57,7 @@ export default function LoginPage() {
   const router = useRouter()
 
   const form = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(isSignUp ? signUpSchema : loginSchema),
+    resolver: zodResolver(isSignUp ? signUpSchema : loginSchema) as any, // Cast to any to handle schema switching type mismatch
     defaultValues: {
       email: "",
       password: "",
