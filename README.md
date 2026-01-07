@@ -9,30 +9,35 @@ Una aplicación web moderna para la gestión de proyectos industriales y tareas 
 ## 🌟 Características Principales
 
 ### 📊 Gestión de Proyectos
+
 - **Creación y administración** de proyectos con fechas y límites de usuarios
 - **Roles de equipo**: Admin, Manager, Member
 - **Estados de proyecto**: Activo, Completado, Archivado
 - **Dashboard visual** con estadísticas en tiempo real
 
 ### ✅ Sistema de Checkpoints
+
 - Verificación por etapas de proyectos
 - Seguimiento porcentual de completitud
 - Orden personalizable de tareas
 - Validación con evidencias fotográficas
 
 ### 📸 Gestión de Evidencias
+
 - Subida de imágenes con notas
 - Almacenamiento en Supabase Storage
 - Vinculación directa a checkpoints
 - Historial de verificaciones
 
 ### 👥 Colaboración en Equipo
+
 - Sistema de invitaciones a proyectos
 - Roles diferenciados (Admin/Manager/Member)
 - Gestión de permisos por proyecto
 - Asignación de miembros
 
 ### 🏆 Sistema de Logros (Gamificación)
+
 - **8 logros básicos** con niveles Bronze, Silver, Gold y Platinum
 - Seguimiento automático de progreso
 - Medallas desbloqueables:
@@ -46,6 +51,7 @@ Una aplicación web moderna para la gestión de proyectos industriales y tareas 
   - 💎 Master (25 proyectos)
 
 ### 👤 Perfiles de Usuario
+
 - Edición de nombre de usuario y nombre para mostrar
 - Subida de foto de perfil
 - Vista de logros obtenidos y pendientes
@@ -56,6 +62,7 @@ Una aplicación web moderna para la gestión de proyectos industriales y tareas 
 ## 🛠️ Stack Tecnológico
 
 ### Frontend
+
 - **Next.js 16** (App Router con Turbopack)
 - **React 19** con TypeScript
 - **Tailwind CSS 4** para estilos
@@ -65,11 +72,13 @@ Una aplicación web moderna para la gestión de proyectos industriales y tareas 
 - **Sonner** para notificaciones toast
 
 ### Backend & Database
+
 - **Supabase** (PostgreSQL + Auth + Storage)
 - Row Level Security (RLS) para seguridad
 - Storage buckets para evidencias y avatares
 
 ### Validación & Forms
+
 - **Zod** para validación de esquemas
 - **React Hook Form** para manejo de formularios
 
@@ -78,11 +87,13 @@ Una aplicación web moderna para la gestión de proyectos industriales y tareas 
 ## 🚀 Deployment
 
 ### Producción
-- **Vercel**: [https://tpv-cowork.vercel.app](https://tpv-cowork.vercel.app)
+
+- **Vercel**: Deployment automático
 - Deploy automático desde `main` branch
 - Variables de entorno configuradas en Vercel
 
 ### Variables de Entorno Requeridas
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -93,6 +104,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## 🗄️ Estructura de Base de Datos
 
 ### Tablas Principales
+
 - **profiles**: Perfiles de usuario (username, avatar_url, display_name)
 - **projects**: Proyectos (title, owner, status, dates)
 - **project_members**: Relación usuarios-proyectos con roles
@@ -102,6 +114,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 - **user_achievements**: Logros desbloqueados por usuario
 
 ### Storage Buckets
+
 - **evidences**: Imágenes de evidencias (público)
 - **avatars**: Fotos de perfil de usuarios (público)
 
@@ -166,15 +179,10 @@ MIT License - Ver archivo `LICENSE` para más detalles
 
 ---
 
-## 👨‍💻 Autor
-
-**byPerry11**
-
----
-
 ## 🤝 Contribuir
 
 Las contribuciones son bienvenidas. Por favor:
+
 1. Fork el proyecto
 2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
 3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
