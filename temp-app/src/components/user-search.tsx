@@ -33,13 +33,19 @@ export function UserSearch() {
         getUser()
     }, [])
 
-    const handleSearch = async (value: string) => {
-        setQuery(value)
-        if (value.length < 2) {
-            setResults([])
-            return
-        }
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (query.length >= 2) {
+                performSearch(query)
+            } else {
+                setResults([])
+            }
+        }, 500) // 500ms debounce
 
+        return () => clearTimeout(timer)
+    }, [query])
+
+    const performSearch = async (value: string) => {
         setLoading(true)
         try {
             const cleanQuery = value.startsWith('@') ? value.slice(1) : value
@@ -67,8 +73,6 @@ export function UserSearch() {
                     statusMap[r.receiver_id] = r.status
                 })
                 
-                // Also check if they sent me a request?
-                // For simplicity, just checking if I sent them one.
                 setRequestStatus(statusMap)
             }
 

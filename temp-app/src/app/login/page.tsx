@@ -32,8 +32,10 @@ const loginSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message: "Password must contain uppercase, lowercase, number and symbol.",
   }),
   // Optional fields for typing compatibility with signUpSchema
   confirmPassword: z.string().optional(),
@@ -206,7 +208,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} onPaste={(e) => e.preventDefault()} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -221,7 +223,7 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input type="password" placeholder="••••••••" {...field} onPaste={(e) => e.preventDefault()} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

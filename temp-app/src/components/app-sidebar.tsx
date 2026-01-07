@@ -51,7 +51,6 @@ export function AppSidebar() {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard", label: "Projects", icon: FolderKanban },
     { href: "/profile", label: "Profile", icon: User },
-    { href: "/profile?tab=friends", label: "Partners", icon: UsersRound },
     { href: "#", label: "Settings", icon: Settings },
   ]
 
