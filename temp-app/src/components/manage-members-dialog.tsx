@@ -50,6 +50,7 @@ interface Member {
     joined_at: string
     profiles: {
         username: string | null
+        display_name: string | null
     }
 }
 
