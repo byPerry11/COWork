@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { Loader2, User, Award } from "lucide-react"
+import { Loader2, User, Award, ArrowLeft } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { ProfileEditForm } from "@/components/profile-edit-form"
 import { AvatarUpload } from "@/components/avatar-upload"
 import { AchievementsDisplay } from "@/components/achievements-display"
@@ -42,11 +43,17 @@ export default function ProfilePage() {
             <main className="flex-1 overflow-y-auto">
                 <div className="container mx-auto p-6 space-y-8 max-w-4xl">
                     {/* Header */}
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
-                        <p className="text-muted-foreground">
-                            Gestiona tu información personal y logros
-                        </p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
+                            <p className="text-muted-foreground">
+                                Gestiona tu información personal y logros
+                            </p>
+                        </div>
+                        <Button variant="outline" onClick={() => router.push("/dashboard")}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Volver al Home
+                        </Button>
                     </div>
 
                     {/* Tabs */}
@@ -65,18 +72,6 @@ export default function ProfilePage() {
                         <TabsContent value="profile" className="space-y-4">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Información de Cuenta</CardTitle>
-                                    <CardDescription>
-                                        Detalles de tu cuenta
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    {userId && <UserInfo userId={userId} />}
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
                                     <CardTitle>Foto de Perfil</CardTitle>
                                     <CardDescription>
                                         Sube o actualiza tu foto de perfil
@@ -84,6 +79,18 @@ export default function ProfilePage() {
                                 </CardHeader>
                                 <CardContent>
                                     {userId && <AvatarUpload userId={userId} />}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Información de Cuenta</CardTitle>
+                                    <CardDescription>
+                                        Detalles de tu cuenta
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {userId && <UserInfo userId={userId} />}
                                 </CardContent>
                             </Card>
 
