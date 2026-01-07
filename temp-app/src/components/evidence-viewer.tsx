@@ -197,19 +197,64 @@ function ReviewSection({ checkpointId, userRole }: { checkpointId: string, userR
                 return
             }
 
-            const { error } = await supabase
-                .from('checkpoints')
-                .update({ 
-                    rating: numRating,
-                    admin_comment: comment
-                 })
-                .eq('id', checkpointId)
+            // Check if this is a rejection (rating ≤ 6)
+            const isRejected = numRating <= 6
 
-            if (error) throw error
-            
-            toast.success("Review saved")
-            setHasReview(true)
-            setIsEditing(false)
+            if (isRejected) {
+                // REJECTION FLOW
+                // 1. Get current evidence ID
+                const { data: evidenceData } = await supabase
+                    .from('evidences')
+                    .select('id, user_id')
+                    .eq('checkpoint_id', checkpointId)
+                    .single()
+
+                // 2. Insert correction record
+                const { data: { user } } = await supabase.auth.getUser()
+                await supabase.from('checkpoint_corrections').insert({
+                    checkpoint_id: checkpointId,
+                    previous_evidence_id: evidenceData?.id,
+                    rejected_by: user?.id,
+                    rejection_rating: numRating,
+                    rejection_comment: comment
+                })
+
+                // 3. Update checkpoint: mark as incomplete, set rejection_reason
+                await supabase.from('checkpoints').update({
+                    is_completed: false,
+                    rating: numRating,
+                    admin_comment: comment,
+                    rejection_reason: comment
+                }).eq('id', checkpointId)
+
+                // 4. Delete the evidence to allow resubmission
+                if (evidenceData?.id) {
+                    await supabase.from('evidences').delete().eq('id', evidenceData.id)
+                }
+
+                toast.error("Checkpoint Rejected", { 
+                    description: `Rating ${numRating}/10. Member will be notified to resubmit.`
+                })
+                
+                // Refresh page to show updated state
+                window.location.reload()
+            } else {
+                // APPROVAL FLOW (rating > 6)
+                const { error } = await supabase
+                    .from('checkpoints')
+                    .update({ 
+                        rating: numRating,
+                        admin_comment: comment,
+                        rejection_reason: null // Clear any previous rejection
+                     })
+                    .eq('id', checkpointId)
+
+                if (error) throw error
+                
+                toast.success("Review saved - Checkpoint Approved")
+                setHasReview(true)
+                setIsEditing(false)
+            }
         } catch (error) {
             toast.error("Failed to save review")
             console.error(error)
