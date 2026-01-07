@@ -136,7 +136,6 @@ export function AppSidebar() {
                   </span>
                 </div>
                 </div>
-              </div>
               <div className="flex items-center gap-1">
                 <NotificationsPopover />
                 <Button variant="ghost" size="icon" onClick={handleLogout}>
