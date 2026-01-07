@@ -18,7 +18,15 @@ interface FriendRequest {
 interface ProjectInvite {
     project_id: string
     project: { title: string }
-    invited_by_profile: { username: string, display_name: string | null } // Assuming we track who invited, but for now we might just show project name
+    invited_by_profile: { username: string, display_name: string | null }
+}
+
+interface RejectedCheckpoint {
+    id: string
+    title: string
+    rejection_reason: string | null
+    rating: number
+    project: { title: string }
 }
 
 export function NotificationsPopover() {
@@ -26,6 +34,7 @@ export function NotificationsPopover() {
     const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [projectInvites, setProjectInvites] = useState<any[]>([]) 
+    const [rejectedCheckpoints, setRejectedCheckpoints] = useState<RejectedCheckpoint[]>([])
     const [count, setCount] = useState(0)
     const [loading, setLoading] = useState(false)
 
@@ -61,7 +70,29 @@ export function NotificationsPopover() {
             if (piError) console.error("Error fetching invites", piError)
             setProjectInvites(piData as any || [])
 
-            setCount((frData?.length || 0) + (piData?.length || 0))
+            // 3. Rejected Checkpoints (where user submitted evidence but admin rejected)
+            const { data: rcData } = await supabase
+                .from('checkpoints')
+                .select(`
+                    id,
+                    title,
+                    rejection_reason,
+                    rating,
+                    project:project_id(title)
+                `)
+                .eq('is_completed', false)
+                .not('rejection_reason', 'is', null) // Only rejections
+                .not('rating', 'is', null) // Must have been rated (rejected)
+                .in('project_id', (
+                    await supabase
+                        .from('project_members')
+                        .select('project_id')
+                        .eq('user_id', user.id)
+                ).data?.map(pm => pm.project_id) || [])
+
+            setRejectedCheckpoints(rcData as any || [])
+
+            setCount((frData?.length || 0) + (piData?.length || 0) + (rcData?.length || 0))
 
         } catch (error) {
             console.error("Error fetching notifications", error)
@@ -154,6 +185,26 @@ export function NotificationsPopover() {
                         )}
                         
                         <div className="p-0">
+                            {/* Rejected Checkpoints */}
+                            {rejectedCheckpoints.map((checkpoint) => (
+                                <div key={checkpoint.id} className="flex flex-col p-4 border-b hover:bg-muted/50 bg-red-50 dark:bg-red-950/10">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-red-700 dark:text-red-400">Checkpoint Rejected ❌</p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                <strong>{checkpoint.project.title}</strong> - {checkpoint.title}
+                                            </p>
+                                            <p className="text-xs mt-1 font-medium">Rating: {checkpoint.rating}/10</p>
+                                            {checkpoint.rejection_reason && (
+                                                <p className="text-xs text-muted-foreground mt-1 italic">
+                                                    "{checkpoint.rejection_reason}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
                             {/* Project Invites */}
                             {projectInvites.map((invite) => (
                                 <div key={invite.project_id} className="flex flex-col p-4 border-b hover:bg-muted/50">
