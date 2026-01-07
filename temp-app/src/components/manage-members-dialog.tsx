@@ -36,7 +36,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 const memberSchema = z.object({
-    email: z.string().email("Invalid email address"),
+    email: z.string().min(3, "Username must be at least 3 characters"),
     role: z.enum(["admin", "manager", "member"]),
 })
 
@@ -55,9 +55,7 @@ interface Member {
 
 export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     const [open, setOpen] = useState(false)
-    const [members, setMembers] = useState<Member[]>([])
-    const [loading, setLoading] = useState(true)
-    const [adding, setAdding] = useState(false)
+    const [friends, setFriends] = useState<{ id: string, username: string | null, display_name: string | null }[]>([])
 
     const form = useForm<z.infer<typeof memberSchema>>({
         resolver: zodResolver(memberSchema),
@@ -70,21 +68,44 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     const fetchMembers = async () => {
         try {
             setLoading(true)
-            const { data, error } = await supabase
+            // 1. Fetch Project Members
+            const { data: membersData, error: membersError } = await supabase
                 .from('project_members')
                 .select(`
                 user_id,
                 role,
                 joined_at,
                 profiles:user_id (
-                    username
+                    username,
+                    display_name
                 )
             `)
                 .eq('project_id', projectId)
 
-            if (error) throw error
+            if (membersError) throw membersError
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setMembers(data as any)
+            setMembers(membersData as any)
+
+            // 2. Fetch User's Friends (to suggest)
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: friendRequests, error: friendError } = await supabase
+                    .from('friend_requests')
+                    .select(`
+                        sender:sender_id(id, username, display_name),
+                        receiver:receiver_id(id, username, display_name)
+                    `)
+                    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+                    .eq('status', 'accepted')
+
+                if (!friendError && friendRequests) {
+                    const myFriends = friendRequests.map((f: any) => {
+                        return f.sender_id === user.id ? f.receiver : f.sender
+                    })
+                    setFriends(myFriends)
+                }
+            }
+
         } catch (error) {
             console.error("Error fetching members", error)
         } finally {
@@ -101,20 +122,32 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     async function onSubmit(values: z.infer<typeof memberSchema>) {
         setAdding(true)
         try {
-            // 1. Find User by Email
-            // Note: Supabase Auth users query is restricted. 
-            // We rely on 'profiles' table having the email in 'username' field 
-            // OR we need a way to look up users. 
-            // Assuming 'profiles.username' stores the email as set in our handle_new_user function.
+            // Find User by Username OR Email
+            // Note: Since 'username' column might be used for login logic or might differ from email,
+            // we should try checking reasonable columns. The schema validates it as an email, 
+            // so we might want to relax that if we allow usernames.
+            // For now, let's assume the user enters what serves as 'username' in our profiles table.
+            
+            // Try to find by exact username match first (case insensitive perhaps, but exact is safer for now)
+            // or if it's an email, we might not have it in public profile depending on privacy settings,
+            // but the requirement says 'username or email'.
+            // Let's assume input is matched against 'username' or 'email' (if stored in metadata/profile?)
+            // Or just 'username' column in profiles.
+            
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('id')
-                .eq('username', values.email) // Our trigger sets username = email
-                .single()
+                .or(`username.eq.${values.email},id.eq.${values.email}`) // Check username or ID directly? Or just username.
+                // ideally we check username.
+                .eq('username', values.email)
+                .maybeSingle()
+            
+            // Note: If you want to support checking by 'display_name' it's risky due to duplicates.
+            // Stick to username.
 
             if (profileError || !profile) {
                 toast.error("User not found", {
-                    description: "Ensure the user has registered in the app first."
+                    description: "No user found with that username."
                 })
                 return
             }
@@ -177,44 +210,71 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
                 <div className="p-4 bg-muted/50 rounded-lg border">
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem className="col-span-1">
-                                            <FormLabel>User Email</FormLabel>
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>User (Username or Email)</FormLabel>
+                                        <div className="flex flex-col gap-2">
                                             <FormControl>
-                                                <Input placeholder="colleague@example.com" {...field} />
+                                                <Input placeholder="Enter username or email" {...field} />
                                             </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                            
+                                            {/* Friend Suggestions */}
+                                            {friends.length > 0 && (
+                                                <div className="mt-2">
+                                                    <p className="text-xs text-muted-foreground mb-2">Suggested Friends:</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {friends
+                                                            // Filter out those who are already members
+                                                            .filter(f => !members.some(m => m.user_id === f.id))
+                                                            .map(friend => (
+                                                            <div 
+                                                                key={friend.id}
+                                                                className="flex items-center gap-2 bg-background border px-2 py-1 rounded-md cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                                                                onClick={() => form.setValue("email", friend.username || "")}
+                                                            >
+                                                                <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center">
+                                                                    <User className="h-3 w-3 text-primary" />
+                                                                </div>
+                                                                <span className="text-sm font-medium">{friend.display_name || friend.username}</span>
+                                                            </div>
+                                                        ))}
+                                                        {friends.filter(f => !members.some(m => m.user_id === f.id)).length === 0 && (
+                                                            <span className="text-xs text-muted-foreground italic">All friends added</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                                <FormField
-                                    control={form.control}
-                                    name="role"
-                                    render={({ field }) => (
-                                        <FormItem className="col-span-1">
-                                            <FormLabel>Role</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a role" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="member">Member</SelectItem>
-                                                    <SelectItem value="manager">Manager</SelectItem>
-                                                    <SelectItem value="admin">Admin</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Role</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a role" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="member">Member</SelectItem>
+                                                <SelectItem value="manager">Manager</SelectItem>
+                                                <SelectItem value="admin">Admin</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             <Button type="submit" size="sm" className="w-full" disabled={adding}>
                                 {adding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
