@@ -96,7 +96,10 @@ function ProjectDetailContent() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg md:text-xl font-bold truncate">{project.title}</h1>
+            <h1 className="text-lg md:text-xl font-bold">
+              <span className="md:hidden">{project.title.slice(0, 7)}{project.title.length > 7 ? '...' : ''}</span>
+              <span className="hidden md:inline truncate">{project.title}</span>
+            </h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ManageMembersDialog projectId={project.id} />
