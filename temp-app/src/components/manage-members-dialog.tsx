@@ -41,7 +41,19 @@ const memberSchema = z.object({
     role: z.enum(["admin", "manager", "member"]),
 })
 
-// ... (interface definitions remain same)
+interface ManageMembersDialogProps {
+    projectId: string
+}
+
+interface Member {
+    user_id: string
+    role: string
+    joined_at: string
+    profiles: {
+        username: string | null
+        display_name: string | null
+    }
+}
 
 export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     // ... (state definitions remain same)
