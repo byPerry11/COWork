@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, User, Bell, FolderKanban } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { NotificationsPopover } from "@/components/notifications-popover"
 
 export function FloatingNav() {
   const pathname = usePathname()
@@ -12,7 +11,8 @@ export function FloatingNav() {
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Home" },
     { href: "/profile", icon: User, label: "Profile" },
-    { href: "/dashboard", icon: FolderKanban, label: "Projects" },
+    { href: "/dashboard/projects", icon: FolderKanban, label: "Projects" },
+    { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },
   ]
 
   return (
@@ -20,9 +20,10 @@ export function FloatingNav() {
       <div className="flex md:flex-col items-center gap-2 p-3 rounded-2xl bg-background/80 backdrop-blur-lg border border-border shadow-lg">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || 
-            (item.label === "Projects" && pathname.startsWith("/projects"))
-          
+          const isActive = pathname === item.href ||
+            (item.label === "Projects" && pathname.startsWith("/projects")) ||
+            (item.label === "Home" && pathname === "/dashboard")
+
           return (
             <Link
               key={item.href}
@@ -30,8 +31,8 @@ export function FloatingNav() {
               className={cn(
                 "relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200",
                 "hover:bg-primary/10 hover:scale-110",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-muted-foreground"
               )}
               title={item.label}
@@ -43,19 +44,6 @@ export function FloatingNav() {
             </Link>
           )
         })}
-
-        {/* Notifications with Popover */}
-        <NotificationsPopover>
-          <div
-            className={cn(
-              "relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200",
-              "hover:bg-primary/10 hover:scale-110 text-muted-foreground cursor-pointer"
-            )}
-            title="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-          </div>
-        </NotificationsPopover>
       </div>
     </nav>
   )
