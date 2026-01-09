@@ -43,50 +43,65 @@ export default function DashboardPage() {
 
       setDisplayName(profile?.display_name || profile?.username || "User")
 
-      // Fetch user projects
-      const { data: projectsData } = await supabase
-        .from("project_members")
-        .select(`
-          role,
-          status,
-          projects:project_id (
-            id,
-            title,
-            status,
-            checkpoints (
-              is_completed
-            )
-          )
-        `)
-        .eq("user_id", session.user.id)
-        .eq("status", "active")
+      const fetchProjects = async (userId: string) => {
+        const { data: projectMembers } = await supabase
+          .from("project_members")
+          .select(`
+                role,
+                status,
+                project:project_id (
+                    id,
+                    title,
+                    category,
+                    description,
+                    color,
+                    project_icon,
+                    status
+                )
+            `)
+          .eq("user_id", userId)
+          .eq("status", "active")
 
-      if (projectsData) {
-        const formattedProjects = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          projectsData.map(async (pm: any) => {
-            const project = pm.projects
+        if (!projectMembers) return []
 
-            // Count members
-            const { count } = await supabase
-              .from("project_members")
-              .select("*", { count: "exact", head: true })
-              .eq("project_id", project.id)
-              .eq("status", "active")
+        // For each project, get checkpoints and calculate progress
+        const projectsWithProgress = await Promise.all(
+          projectMembers
+            .filter(pm => pm.project && typeof pm.project === 'object')
+            .map(async (member) => {
+              const project = member.project as any
+              const { data: checkpoints } = await supabase
+                .from("checkpoints")
+                .select("is_completed")
+                .eq("project_id", project.id)
 
-            return {
-              id: project.id,
-              title: project.title,
-              status: project.status,
-              role: pm.role,
-              checkpoints: project.checkpoints || [],
-              memberCount: count || 1
-            }
-          })
+              const total = checkpoints?.length || 0
+              const completed = checkpoints?.filter(c => c.is_completed).length || 0
+              const progress = total > 0 ? (completed / total) * 100 : 0
+
+              // Count members
+              const { count } = await supabase
+                .from("project_members")
+                .select("*", { count: "exact", head: true })
+                .eq("project_id", project.id)
+                .eq("status", "active")
+
+              return {
+                ...project,
+                role: member.role,
+                progress,
+                memberCount: count || 0,
+                category: project.category,
+                description: project.description,
+                color: project.color,
+                project_icon: project.project_icon,
+              }
+            })
         )
 
-        setProjects(formattedProjects)
+        setProjects(projectsWithProgress)
       }
+      await fetchProjects(session.user.id)
 
       setLoading(false)
     }
@@ -157,7 +172,11 @@ export default function DashboardPage() {
                       key={project.id}
                       id={project.id}
                       title={project.title}
-                      progress={calculateProgress(project.checkpoints)}
+                      description={project.description}
+                      category={project.category}
+                      color={project.color}
+                      project_icon={project.project_icon}
+                      progress={project.progress}
                       role={project.role}
                       status={project.status}
                       memberCount={project.memberCount}
