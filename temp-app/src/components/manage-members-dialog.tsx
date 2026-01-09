@@ -56,7 +56,11 @@ interface Member {
 }
 
 export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
-    // ... (state definitions remain same)
+    const [open, setOpen] = useState(false)
+    const [members, setMembers] = useState<Member[]>([])
+    const [loading, setLoading] = useState(false)
+    const [adding, setAdding] = useState(false)
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
     const form = useForm<z.infer<typeof memberSchema>>({
         resolver: zodResolver(memberSchema),
@@ -66,7 +70,36 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
         },
     })
 
-    // ... (fetchMembers remains same)
+    const fetchMembers = async () => {
+        setLoading(true)
+        const { data, error } = await supabase
+            .from('project_members')
+            .select(`
+                user_id,
+                role,
+                joined_at,
+                profiles:user_id (
+                    username,
+                    display_name
+                )
+            `)
+            .eq('project_id', projectId)
+        
+        if (error) {
+            toast.error("Failed to load members")
+            console.error(error)
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setMembers(data as any)
+        }
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        if (open) {
+            fetchMembers()
+        }
+    }, [open, projectId])
 
     async function onSubmit(values: z.infer<typeof memberSchema>) {
         setAdding(true)
