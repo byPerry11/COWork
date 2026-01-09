@@ -8,7 +8,9 @@ export default function AuthenticatedLayout({
     return (
         <>
             <FloatingNav />
-            {children}
+            <div className="md:pl-24 w-full">
+                {children}
+            </div>
         </>
     )
 }

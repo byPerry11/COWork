@@ -150,9 +150,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Projects Grid + Calendar */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Projects Grid - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="xl:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Your Projects</h2>
                 <span className="text-sm text-muted-foreground">
@@ -189,7 +189,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Calendar - Takes 1 column on large screens */}
-            <div className="lg:col-span-1">
+            <div className="xl:col-span-1">
               <CalendarWidget />
             </div>
           </div>
