@@ -1,14 +1,12 @@
 export const ENGINEERING_CATEGORIES = [
-    { value: 'software', label: 'Software Engineering', emoji: '💻', color: '#6366f1' },
-    { value: 'mechanical', label: 'Mechanical Engineering', emoji: '⚙️', color: '#f59e0b' },
-    { value: 'electrical', label: 'Electrical Engineering', emoji: '⚡', color: '#eab308' },
-    { value: 'civil', label: 'Civil Engineering', emoji: '🏗️', color: '#84cc16' },
-    { value: 'chemical', label: 'Chemical Engineering', emoji: '🧪', color: '#10b981' },
-    { value: 'industrial', label: 'Industrial Engineering', emoji: '🏭', color: '#14b8a6' },
-    { value: 'aerospace', label: 'Aerospace Engineering', emoji: '✈️', color: '#06b6d4' },
-    { value: 'biomedical', label: 'Biomedical Engineering', emoji: '🩺', color: '#ec4899' },
-    { value: 'environmental', label: 'Environmental Engineering', emoji: '🌱', color: '#22c55e' },
-    { value: 'petroleum', label: 'Petroleum Engineering', emoji: '⛽', color: '#f97316' },
+    { value: 'software', label: 'Software', emoji: '💻', color: '#6366f1' },
+    { value: 'mechanical', label: 'Mechanical', emoji: '⚙️', color: '#f59e0b' },
+    { value: 'electrical', label: 'Electrical', emoji: '⚡', color: '#eab308' },
+    { value: 'civil', label: 'Civil', emoji: '🏗️', color: '#84cc16' },
+    { value: 'chemical', label: 'Chemical', emoji: '🧪', color: '#10b981' },
+    { value: 'industrial', label: 'Industrial', emoji: '🏭', color: '#14b8a6' },
+    { value: 'aerospace', label: 'Aerospace', emoji: '✈️', color: '#06b6d4' },
+    { value: 'biomedical', label: 'Biomedical', emoji: '🩺', color: '#ec4899' },
     { value: 'other', label: 'Other', emoji: '📦', color: '#64748b' },
 ] as const
 

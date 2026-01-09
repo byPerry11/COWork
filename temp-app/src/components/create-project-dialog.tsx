@@ -342,9 +342,23 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Max Users</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={1} {...field} />
-                  </FormControl>
+                  <Select
+                    onValueChange={(val) => field.onChange(parseInt(val))}
+                    defaultValue={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select max users" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? 'member' : 'members'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
                     Maximum number of team members
                   </FormDescription>
