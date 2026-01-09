@@ -50,6 +50,7 @@ export interface Checkpoint {
   project_id: string
   title: string
   is_completed: boolean
+  completed_by?: string | null
   order: number
   created_at: string
 }

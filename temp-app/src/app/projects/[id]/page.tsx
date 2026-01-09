@@ -156,7 +156,12 @@ function ProjectDetailContent() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
             {/* Checkpoints Column */}
             <div className="lg:col-span-3 space-y-6">
-              <CheckpointList projectId={project.id} userRole={userRole} key={refreshKey} />
+              <CheckpointList
+                projectId={project.id}
+                userRole={userRole}
+                members={members}
+                key={refreshKey}
+              />
             </div>
 
             {/* Sidebar Column */}

@@ -79,9 +79,9 @@ export function EvidenceForm({ checkpointId, onSuccess }: EvidenceFormProps) {
           console.warn("Upload failed (bucket might be missing):", uploadError)
           // Don't fail the whole process if upload fails, unless strict. 
           // For now let's warn user but maybe continue? No, evidence is required.
-           toast.error("Image upload failed. Please try again or just add a note.")
-           setIsLoading(false)
-           return
+          toast.error("Image upload failed. Please try again or just add a note.")
+          setIsLoading(false)
+          return
         } else {
           const { data: { publicUrl } } = supabase.storage
             .from('evidences')
@@ -107,7 +107,10 @@ export function EvidenceForm({ checkpointId, onSuccess }: EvidenceFormProps) {
       // Mark Checkpoint as Completed
       await supabase
         .from("checkpoints")
-        .update({ is_completed: true })
+        .update({
+          is_completed: true,
+          completed_by: session.user.id
+        })
         .eq("id", checkpointId)
 
       toast.success("Evidence submitted successfully!")
@@ -131,9 +134,9 @@ export function EvidenceForm({ checkpointId, onSuccess }: EvidenceFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
 
         <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-md border border-blue-100 dark:border-blue-900">
-             <p className="text-sm text-blue-800 dark:text-blue-300">
-                To complete this task, please provide a photo evidence <strong>OR</strong> a note explaining the result.
-             </p>
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            To complete this task, please provide a photo evidence <strong>OR</strong> a note explaining the result.
+          </p>
         </div>
 
         {/* Camera / File Input */}
