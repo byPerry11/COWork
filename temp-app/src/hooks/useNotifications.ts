@@ -33,7 +33,10 @@ export interface RejectedCheckpoint {
     title: string
     rejection_reason: string | null
     rating: number
-    project: { title: string }
+    project: { 
+        id: string
+        title: string 
+    }
 }
 
 export function useNotifications() {
@@ -101,7 +104,7 @@ export function useNotifications() {
                         title,
                         rejection_reason,
                         rating,
-                        project:project_id(title)
+                        project:project_id(id, title)
                     `)
                     .eq('is_completed', false)
                     .not('rejection_reason', 'is', null)
