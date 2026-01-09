@@ -43,7 +43,8 @@ export function DeleteProjectDialog({ projectId, projectTitle }: DeleteProjectDi
 
             toast.success("Project deleted successfully")
             setOpen(false)
-            router.push('/dashboard')
+            // Force a hard refresh to ensure the dashboard data is re-fetched and cache is cleared
+            window.location.href = '/dashboard'
 
         } catch (error: any) {
             toast.error("Failed to delete project", {

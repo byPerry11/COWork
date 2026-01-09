@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
 import { ColorPicker } from "@/components/color-picker"
 import { EmojiPicker } from "@/components/emoji-picker"
+import { UserMultiSelect } from "@/components/user-multi-select"
 import { ENGINEERING_CATEGORIES } from "@/lib/project-constants"
 
 const projectSchema = z.object({
@@ -64,6 +65,7 @@ interface CreateProjectDialogProps {
 export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [invitedUsers, setInvitedUsers] = useState<string[]>([])
 
   const form = useForm<z.infer<typeof projectSchema>>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,14 +115,35 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
         .insert({
           project_id: projectData.id,
           user_id: session.user.id,
-          role: 'admin'
+          role: 'admin',
+          status: 'active' // Owner is active by default
         })
 
       if (memberError) throw memberError
 
+      // Add invited members (pending status)
+      if (invitedUsers.length > 0) {
+        const invitations = invitedUsers.map(uid => ({
+          project_id: projectData.id,
+          user_id: uid,
+          role: 'member',
+          status: 'pending'
+        }))
+
+        const { error: inviteError } = await supabase
+          .from('project_members')
+          .insert(invitations)
+
+        if (inviteError) {
+          console.error("Error inviting users:", inviteError)
+          toast.error("Proyecto creado, pero fallaron algunas invitaciones")
+        }
+      }
+
       toast.success("Proyecto creado exitosamente")
       setOpen(false)
       form.reset()
+      setInvitedUsers([]) // Reset invitations
       onSuccess()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -334,6 +357,18 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* Invite Members */}
+            <div className="space-y-2">
+              <FormLabel>Invite Members</FormLabel>
+              <UserMultiSelect
+                selectedUsers={invitedUsers}
+                onSelectionChange={setInvitedUsers}
+              />
+              <FormDescription>
+                Select friends or search users to invite
+              </FormDescription>
+            </div>
 
             {/* Max Users */}
             <FormField
