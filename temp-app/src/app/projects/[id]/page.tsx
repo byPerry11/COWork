@@ -130,11 +130,9 @@ function ProjectDetailContent() {
                 <span className="md:hidden">{project.title.slice(0, 7)}{project.title.length > 7 ? '...' : ''}</span>
                 <span className="hidden md:inline truncate">{project.title}</span>
                 <span className="text-2xl" role="img" aria-label="icon">
-                  {/* @ts-expect-error project_icon might be missing in type definition yet */}
                   {project.project_icon || '📁'}
                 </span>
               </h1>
-              {/* @ts-expect-error category might be missing in type definition yet */}
               {project.category && (
                 <span className="text-xs text-muted-foreground hidden md:inline-block">
                   {project.category}
@@ -163,12 +161,10 @@ function ProjectDetailContent() {
               <ProjectMembersList members={members} currentUserId={currentUserId} />
 
               {/* Additional project details could go here */}
-              {/* @ts-expect-error description might be missing in type definition yet */}
               {project.description && (
                 <div className="p-4 bg-white dark:bg-card rounded-lg border shadow-sm">
                   <h3 className="font-semibold mb-2">About Project</h3>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {/* @ts-expect-error description might be missing in type definition yet */}
                     {project.description}
                   </p>
                 </div>
