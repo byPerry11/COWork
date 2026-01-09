@@ -38,7 +38,7 @@ export function ProjectMembersList({ members, currentUserId }: ProjectMembersLis
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-                <ScrollArea className="h-[200px] pr-3">
+                <ScrollArea className="h-[150px] pr-3">
                     <div className="space-y-3">
                         {activeMembers.map((member) => {
                             // Enforce purlple for admin

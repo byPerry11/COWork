@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select"
 import { supabase } from "@/lib/supabaseClient"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { UserMultiSelect } from "@/components/user-multi-select"
 
 const memberSchema = z.object({
     email: z.string().min(3, "Username must be at least 3 characters"),
@@ -134,17 +135,17 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
             if (!targetUserId) {
                 // Find User by Username OR Email
                 const query = values.email.trim()
-                
+
                 // Allow search by ID if it looks like a UUID (optional but handy)
                 // or just username / email
-                
+
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('id')
-                    .or(`username.eq.${query},id.eq.${query}`) 
+                    .or(`username.eq.${query},id.eq.${query}`)
                     .maybeSingle()
-                
-                 if (profileError || !profile) {
+
+                if (profileError || !profile) {
                     toast.error("User not found", {
                         description: "No user found with that username."
                     })
@@ -221,52 +222,28 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
                             <FormField
                                 control={form.control}
                                 name="email"
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>User (Username or Email)</FormLabel>
+                                        <FormLabel>Add Members</FormLabel>
                                         <div className="flex flex-col gap-2">
                                             <FormControl>
-                                                <Input 
-                                                    placeholder="Enter username or email" 
-                                                    {...field} 
-                                                    onChange={(e) => {
-                                                        field.onChange(e)
-                                                        setSelectedUserId(null) // Clear selection if typing
+                                                {/* Use UserMultiSelect for searching and selecting users */}
+                                                <UserMultiSelect
+                                                    selectedUsers={selectedUserId ? [selectedUserId] : []}
+                                                    onSelectionChange={(users) => {
+                                                        // In this dialog we only support adding one by one for now to match the form flow, 
+                                                        // or we could assume the last selected one is the target.
+                                                        // Let's take the last one added as the "current" selection
+                                                        const lastSelected = users[users.length - 1];
+                                                        setSelectedUserId(lastSelected || null);
+                                                        // Also update string field to satisfy validation if needed, though we use ID for logic
+                                                        if (lastSelected) form.setValue("email", "selected");
                                                     }}
                                                 />
                                             </FormControl>
-                                            
-                                            {/* Friend Suggestions */}
-                                            {friends.length > 0 && (
-                                                <div className="mt-2">
-                                                    <p className="text-xs text-muted-foreground mb-2">Suggested Friends:</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {friends
-                                                            // Filter out those who are already members
-                                                            .filter(f => !members.some(m => m.user_id === f.id))
-                                                            .map(friend => (
-                                                            <div 
-                                                                key={friend.id}
-                                                                className={`flex items-center gap-2 border px-2 py-1 rounded-md cursor-pointer transition-colors ${selectedUserId === friend.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent'}`}
-                                                                onClick={() => {
-                                                                    form.setValue("email", friend.username || "")
-                                                                    setSelectedUserId(friend.id)
-                                                                }}
-                                                            >
-                                                                <div className={`h-4 w-4 rounded-full flex items-center justify-center ${selectedUserId === friend.id ? 'bg-white/20' : 'bg-primary/20'}`}>
-                                                                    <User className={`h-3 w-3 ${selectedUserId === friend.id ? 'text-white' : 'text-primary'}`} />
-                                                                </div>
-                                                                <span className="text-sm font-medium">{friend.display_name || friend.username}</span>
-                                                            </div>
-                                                        ))}
-                                                        {friends.filter(f => !members.some(m => m.user_id === f.id)).length === 0 && (
-                                                            <span className="text-xs text-muted-foreground italic">All friends added</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
+                                            <FormMessage />
                                         </div>
-                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -294,7 +271,7 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
                                 )}
                             />
 
-                            <Button type="submit" size="sm" className="w-full" disabled={adding}>
+                            <Button type="submit" size="sm" className="w-full" disabled={adding || !selectedUserId}>
                                 {adding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Add Member
                             </Button>

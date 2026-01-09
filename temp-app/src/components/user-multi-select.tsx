@@ -175,7 +175,7 @@ export function UserMultiSelect({ selectedUsers, onSelectionChange }: UserMultiS
                             {users.map((user) => (
                                 <CommandItem
                                     key={user.id}
-                                    value={user.id}
+                                    value={user.username || user.id}
                                     onSelect={() => toggleUser(user.id)}
                                     className="cursor-pointer"
                                 >

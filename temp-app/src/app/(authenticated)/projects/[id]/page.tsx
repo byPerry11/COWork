@@ -13,6 +13,7 @@ import { LeaveProjectDialog } from "@/components/leave-project-dialog"
 import { DeleteProjectDialog } from "@/components/delete-project-dialog"
 import { Project } from "@/types"
 import { useProjectRole } from "@/hooks/use-project-role"
+import { ProjectCalendar } from "@/components/project-calendar"
 
 function ProjectDetailContent() {
   const params = useParams()
@@ -175,6 +176,13 @@ function ProjectDetailContent() {
             {/* Sidebar Column */}
             <div className="lg:col-span-1 space-y-6">
               <ProjectMembersList members={members} currentUserId={currentUserId} />
+
+              {project && (
+                <ProjectCalendar
+                  startDate={new Date(project.start_date)}
+                  endDate={project.end_date ? new Date(project.end_date) : undefined}
+                />
+              )}
             </div>
           </div>
         </main>
