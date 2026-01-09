@@ -4,27 +4,90 @@ import * as React from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { isSameDay, format } from "date-fns"
+import { isSameDay, format, parseISO } from "date-fns"
+import { supabase } from "@/lib/supabaseClient"
+import { useEffect, useState } from "react"
 
 interface ProjectCalendarProps {
+    projectId: string
     startDate: Date
     endDate?: Date
     className?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    members: any[]
 }
 
-export function ProjectCalendar({ startDate, endDate, className }: ProjectCalendarProps) {
-    // Create an array of modifier dates for highlighting
+export function ProjectCalendar({ projectId, startDate, endDate, members, className }: ProjectCalendarProps) {
+    const [completedDates, setCompletedDates] = useState<{ date: Date, color: string, userId: string }[]>([])
+
+    useEffect(() => {
+        const fetchCompletedCheckpoints = async () => {
+            const { data } = await supabase
+                .from('checkpoints')
+                .select('completed_at, completed_by')
+                .eq('project_id', projectId)
+                .eq('is_completed', true)
+                .not('completed_at', 'is', null)
+
+            if (data) {
+                // Map to dates with colors
+                const dates = data.map((cp: any) => {
+                    const completer = members.find((m: any) => m.user_id === cp.completed_by)
+                    const color = completer ? (completer.role === 'admin' ? '#a855f7' : (completer.member_color || '#808080')) : '#808080'
+                    return {
+                        date: parseISO(cp.completed_at),
+                        color,
+                        userId: cp.completed_by
+                    }
+                })
+                setCompletedDates(dates)
+            }
+        }
+
+        if (projectId) {
+            fetchCompletedCheckpoints()
+        }
+    }, [projectId, members])
+
+    // Create dynamic modifiers for each unique user/color group
+    // Actually, react-day-picker 101: One modifier per style. 
+    // If multiple users have same color, can group.
+    // If same user has multiple dates, group.
+
+    const userModifiers: Record<string, Date[]> = {}
+    const userStyles: Record<string, React.CSSProperties> = {}
+
+    completedDates.forEach(item => {
+        const key = `user_${item.userId}`
+        if (!userModifiers[key]) {
+            userModifiers[key] = []
+            userStyles[key] = {
+                backgroundColor: item.color,
+                color: 'white',
+                fontWeight: 'bold',
+                borderRadius: '100%' // Circle
+            }
+        }
+        // Avoid duplicates if multiple checkpoints same day same user
+        if (!userModifiers[key].some(d => isSameDay(d, item.date))) {
+            userModifiers[key].push(item.date)
+        }
+    })
+
+    // Priority: Start/End > User Completion? Or User Completion > Start/End?
+    // User probably wants to see activity.
+    // Let's merge modifiers.
+
     const modifiers = {
         start: startDate,
         end: endDate || undefined,
-        projectRange: endDate ? { from: startDate, to: endDate } : undefined
+        ...userModifiers
     }
 
-    // Styles for modifiers
     const modifiersStyles = {
-        start: { color: 'white', backgroundColor: '#22c55e' }, // Green
-        end: { color: 'white', backgroundColor: '#ef4444' },   // Red
-        projectRange: { color: 'inherit', backgroundColor: 'var(--accent)' }
+        start: { color: 'white', backgroundColor: '#22c55e' }, // Green overrides
+        end: { color: 'white', backgroundColor: '#ef4444' },   // Red overrides
+        ...userStyles
     }
 
     return (
@@ -37,16 +100,9 @@ export function ProjectCalendar({ startDate, endDate, className }: ProjectCalend
             <CardContent className="px-4 pb-4 flex flex-col items-center">
                 <Calendar
                     mode="single"
-                    selected={new Date()} // Highlight today slightly
                     defaultMonth={startDate}
-                    modifiers={{
-                        start: startDate,
-                        ...(endDate ? { end: endDate } : {})
-                    }}
-                    modifiersClassNames={{
-                        start: "bg-green-500 text-white hover:bg-green-600 rounded-md",
-                        end: "bg-red-500 text-white hover:bg-red-600 rounded-md"
-                    }}
+                    modifiers={modifiers as any}
+                    modifiersStyles={modifiersStyles}
                     className="rounded-md border shadow-sm w-full flex justify-center p-2"
                 />
 

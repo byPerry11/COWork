@@ -109,7 +109,8 @@ export function EvidenceForm({ checkpointId, onSuccess }: EvidenceFormProps) {
         .from("checkpoints")
         .update({
           is_completed: true,
-          completed_by: session.user.id
+          completed_by: session.user.id,
+          completed_at: new Date().toISOString()
         })
         .eq("id", checkpointId)
 

@@ -179,8 +179,10 @@ function ProjectDetailContent() {
 
               {project && (
                 <ProjectCalendar
+                  projectId={project.id}
                   startDate={new Date(project.start_date)}
                   endDate={project.end_date ? new Date(project.end_date) : undefined}
+                  members={members}
                 />
               )}
             </div>
