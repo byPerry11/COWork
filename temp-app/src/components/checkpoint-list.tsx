@@ -4,6 +4,7 @@ import { Checkpoint } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, Circle, Camera, GripVertical } from "lucide-react"
+import { toast } from "sonner"
 import { EvidenceForm } from "@/components/evidence-form"
 import { EvidenceViewer } from "@/components/evidence-viewer"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -252,5 +253,4 @@ export function CheckpointList({ projectId, userRole, members }: CheckpointListP
         </DndContext>
     )
 }
-// Need to add toast import
-import { toast } from "sonner"
+
