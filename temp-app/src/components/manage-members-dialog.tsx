@@ -72,26 +72,52 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
 
     const fetchMembers = async () => {
         setLoading(true)
-        const { data, error } = await supabase
+        
+        // 1. Fetch project members
+        const { data: membersData, error: membersError } = await supabase
             .from('project_members')
-            .select(`
-                user_id,
-                role,
-                joined_at,
-                profiles:user_id (
-                    username,
-                    display_name
-                )
-            `)
+            .select('user_id, role, joined_at')
             .eq('project_id', projectId)
         
-        if (error) {
+        if (membersError) {
             toast.error("Failed to load members")
-            console.error(error)
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setMembers(data as any)
+            console.error(membersError)
+            setLoading(false)
+            return
         }
+
+        const memberUserIds = membersData.map(m => m.user_id)
+
+        if (memberUserIds.length === 0) {
+            setMembers([])
+            setLoading(false)
+            return
+        }
+
+        // 2. Fetch profiles for these users
+        const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, display_name')
+            .in('id', memberUserIds)
+
+        if (profilesError) {
+            console.error("Error fetching profiles for members", profilesError)
+        }
+
+        // 3. Combine data
+        const combinedMembers = membersData.map(member => {
+            const profile = profilesData?.find(p => p.id === member.user_id)
+            return {
+                ...member,
+                profiles: profile ? {
+                    username: profile.username,
+                    display_name: profile.display_name
+                } : { username: 'Unknown', display_name: 'Unknown User' }
+            }
+        })
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMembers(combinedMembers as any)
         setLoading(false)
     }
 
