@@ -60,26 +60,41 @@ function ProjectDetailContent() {
         setProject(projectData)
         setTempDescription(projectData.description || "")
 
-        // Fetch members with profiles
-        const { data: membersData, error: membersError } = await supabase
+        // Fetch members (raw, no join)
+        const { data: membersRaw, error: membersError } = await supabase
           .from("project_members")
-          .select(`
-            user_id,
-            role,
-            status,
-            member_color,
-            profile:user_id (
-              username,
-              display_name,
-              avatar_url
-            )
-          `)
+          .select("user_id, role, status, member_color")
           .eq("project_id", id)
 
         if (membersError) {
           console.error("Error fetching members:", membersError)
         } else {
-          setMembers(membersData || [])
+          // Manually fetch profiles
+          const userIds = membersRaw?.map(m => m.user_id) || []
+          let profiles: any[] = []
+
+          if (userIds.length > 0) {
+            const { data: profilesData } = await supabase
+              .from('profiles')
+              .select('id, username, display_name, avatar_url')
+              .in('id', userIds)
+            profiles = profilesData || []
+          }
+
+          // Merge data
+          const mergedMembers = membersRaw?.map(member => {
+            const profile = profiles.find(p => p.id === member.user_id)
+            return {
+              ...member,
+              profile: profile ? {
+                username: profile.username,
+                display_name: profile.display_name,
+                avatar_url: profile.avatar_url
+              } : null
+            }
+          }) || []
+
+          setMembers(mergedMembers)
         }
 
       } catch (err) {
@@ -186,17 +201,17 @@ function ProjectDetailContent() {
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-primary">About Project</h3>
               {isOwner && !isEditingDescription && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6 text-muted-foreground hover:text-primary" 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-primary"
                   onClick={() => setIsEditingDescription(true)}
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
               )}
             </div>
-            
+
             {isEditingDescription ? (
               <div className="space-y-3">
                 <Textarea
@@ -206,9 +221,9 @@ function ProjectDetailContent() {
                   className="min-h-[100px]"
                 />
                 <div className="flex justify-end gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => {
                       setIsEditingDescription(false)
                       setTempDescription(project.description || "")
@@ -217,20 +232,20 @@ function ProjectDetailContent() {
                   >
                     <X className="h-4 w-4 mr-1" /> Cancel
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={handleSaveDescription}
                     disabled={savingDescription}
                   >
-                    {savingDescription ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />} 
+                    {savingDescription ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
                     Save
                   </Button>
                 </div>
               </div>
             ) : (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                  {project.description || "No description provided."}
-                </p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {project.description || "No description provided."}
+              </p>
             )}
           </div>
 
