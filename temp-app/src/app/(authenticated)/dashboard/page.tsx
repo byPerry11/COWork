@@ -10,6 +10,8 @@ import { CalendarWidget } from "@/components/calendar-widget"
 import { GlobalSearchBar } from "@/components/global-search-bar"
 import { Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { NotificationsList } from "@/components/notifications-list"
 
 interface UserProject {
   id: string
@@ -31,6 +33,14 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<UserProject[]>([])
 
   const [hasNotifications, setHasNotifications] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768)
+    checkDesktop()
+    window.addEventListener('resize', checkDesktop)
+    return () => window.removeEventListener('resize', checkDesktop)
+  }, [])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -169,12 +179,43 @@ export default function DashboardPage() {
               <div className="flex-1 md:flex-initial">
                 <GlobalSearchBar />
               </div>
-              <Button size="icon" variant="ghost" className="rounded-full relative" onClick={() => router.push('/dashboard/notifications')}>
-                <Bell className="h-5 w-5" />
-                {hasNotifications && (
-                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border border-white" />
-                )}
-              </Button>
+
+              {/* Responsive Notification Bell */}
+              {isDesktop ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="icon" variant="ghost" className="rounded-full relative">
+                      <Bell className="h-5 w-5" />
+                      {hasNotifications && (
+                        <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-600 border-2 border-background" />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="end">
+                    <div className="p-4 border-b">
+                      <h4 className="font-semibold">Notifications</h4>
+                    </div>
+                    <NotificationsList embedded={true} />
+                    <div className="p-2 border-t bg-muted/30">
+                      <Button variant="ghost" className="w-full text-xs h-8" onClick={() => router.push('/dashboard/notifications')}>
+                        View All
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full relative"
+                  onClick={() => router.push('/dashboard/notifications')}
+                >
+                  <Bell className="h-5 w-5" />
+                  {hasNotifications && (
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border border-white" />
+                  )}
+                </Button>
+              )}
             </div>
           </div>
 
