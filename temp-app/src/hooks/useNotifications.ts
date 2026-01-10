@@ -12,6 +12,7 @@ export interface FriendRequest {
         avatar_url: string | null
     }
     created_at: string
+    status: 'pending' | 'accepted' | 'rejected'
 }
 
 export interface ProjectInvitation {
@@ -19,6 +20,7 @@ export interface ProjectInvitation {
     user_id: string
     role: string
     created_at: string
+    status: 'pending' | 'active' | 'rejected'
     project: {
         title: string
         owner: {
@@ -57,11 +59,13 @@ export function useNotifications() {
                 .select(`
                     id,
                     created_at,
+                    status,
                     sender:sender_id(username, display_name, avatar_url)
                 `)
                 .eq('receiver_id', user.id)
-                .eq('status', 'pending')
+                .in('status', ['pending', 'accepted', 'rejected'])
                 .order('created_at', { ascending: false })
+                .limit(20)
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setFriendRequests(frData as any || [])
@@ -73,6 +77,7 @@ export function useNotifications() {
                     project_id,
                     user_id,
                     role,
+                    status,
                     created_at,
                     project:project_id(
                         title,
@@ -80,17 +85,19 @@ export function useNotifications() {
                     )
                 `)
                 .eq('user_id', user.id)
-                .eq('status', 'pending')
+                .in('status', ['pending', 'active', 'rejected'])
                 .order('created_at', { ascending: false })
+                .limit(20)
 
             if (piError) console.error("Error fetching invites", piError)
 
-            // Filter out invites where project is null (RLS restricted or deleted)
+            // Do NOT filter out invites where project is null (RLS restricted)
+            // We want to show the invitation even if we can't see the details yet
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const validInvites = (piData as any || []).filter((inv: any) => inv.project)
+            const validInvites = (piData as any || [])
             setProjectInvites(validInvites)
 
-            // 3. Rejected Checkpoints
+            // 3. Rejected Checkpoints (Keep as is for now, usually these are "pending" resolution)
             // First get project IDs where user is a member
             const { data: userProjects } = await supabase
                 .from('project_members')
@@ -113,16 +120,18 @@ export function useNotifications() {
                     .not('rejection_reason', 'is', null)
                     .in('project_id', projectIds)
 
-                // Filter out checkpoints where project is null
+                // Do NOT filter out checkpoints where project is null
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const validCheckpoints = (rcData as any || []).filter((cp: any) => cp.project)
+                const validCheckpoints = (rcData as any || [])
                 setRejectedCheckpoints(validCheckpoints)
             } else {
                 setRejectedCheckpoints([])
             }
 
-            // Update counts
-            const total = (frData?.length || 0) + (piData?.length || 0) + (rejectedCheckpoints.length)
+            // Update counts (Only count PENDING as unread)
+            const pendingFR = frData?.filter((fr: any) => fr.status === 'pending').length || 0
+            const pendingPI = validInvites.filter((pi: any) => pi.status === 'pending').length
+            const total = pendingFR + pendingPI + rejectedCheckpoints.length
             setUnreadCount(total)
 
         } catch (error) {
@@ -170,10 +179,10 @@ export function useNotifications() {
             }
             toast.success("Joined project successfully")
         } else {
-            // Check if we should delete or mark rejected. Deletion allows re-invite easily.
+            // Updated: Mark as rejected instead of deleting
             const { error } = await supabase
                 .from("project_members")
-                .delete()
+                .update({ status: "rejected" })
                 .eq("project_id", projectId)
                 .eq("user_id", user.id)
 

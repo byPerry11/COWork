@@ -81,15 +81,57 @@ export function NotificationsList({ embedded = false }: NotificationsListProps) 
                 </div>
             )}
 
-            {/* Friend Requests */}
-            {friendRequests.length > 0 && (
+            {/* Project Invitations - Pending */}
+            {projectInvites.some(i => i.status === 'pending') && (
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 font-medium">
+                        <FolderPlus className="h-4 w-4" />
+                        <span>Project Invitations</span>
+                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                            {projectInvites.filter(i => i.status === 'pending').length}
+                        </Badge>
+                    </div>
+                    {projectInvites.filter(i => i.status === 'pending').map(invitation => (
+                        <Card key={invitation.project_id}>
+                            <CardContent className="p-3 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                        <FolderPlus className="h-4 w-4 text-blue-500" />
+                                    </div>
+                                    <div className="truncate">
+                                        <p className="text-sm font-medium truncate">
+                                            {invitation.project?.title || "Project Invitation"}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            Invited by {invitation.project?.owner?.display_name || "Owner"}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                    <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleProjectInvitation(invitation.project_id, false)}>
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                    <Button size="icon" className="h-7 w-7" onClick={() => handleProjectInvitation(invitation.project_id, true)}>
+                                        <Check className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
+            {/* Friend Requests - Pending */}
+            {friendRequests.some(r => r.status === 'pending') && (
                 <div className="space-y-3">
                     <div className="flex items-center gap-2 font-medium">
                         <UserPlus className="h-4 w-4" />
                         <span>Friend Requests</span>
-                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{friendRequests.length}</Badge>
+                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                            {friendRequests.filter(r => r.status === 'pending').length}
+                        </Badge>
                     </div>
-                    {friendRequests.map(request => (
+                    {friendRequests.filter(r => r.status === 'pending').map(request => (
                         <Card key={request.id}>
                             <CardContent className="p-3 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 overflow-hidden">
@@ -119,40 +161,53 @@ export function NotificationsList({ embedded = false }: NotificationsListProps) 
                 </div>
             )}
 
-            {/* Project Invitations */}
-            {projectInvites.length > 0 && (
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2 font-medium">
-                        <FolderPlus className="h-4 w-4" />
-                        <span>Project Invitations</span>
-                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{projectInvites.length}</Badge>
-                    </div>
-                    {projectInvites.map(invitation => (
-                        <Card key={invitation.project_id}>
-                            <CardContent className="p-3 flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                        <FolderPlus className="h-4 w-4 text-blue-500" />
-                                    </div>
-                                    <div className="truncate">
-                                        <p className="text-sm font-medium truncate">
-                                            {invitation.project?.title || "Project Invitation"}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground truncate">
-                                            Invited by {invitation.project?.owner?.display_name || "Owner"}
-                                        </p>
-                                    </div>
+            {/* History Section */}
+            {(friendRequests.some(r => r.status !== 'pending') || projectInvites.some(i => i.status !== 'pending')) && (
+                <div className="pt-4 border-t space-y-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Recent History</h3>
+
+                    {/* Historic Project Invites */}
+                    {projectInvites.filter(i => i.status !== 'pending').map(invitation => (
+                        <div key={invitation.project_id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 opacity-70">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                    <FolderPlus className="h-4 w-4 text-gray-500" />
                                 </div>
-                                <div className="flex gap-1 flex-shrink-0">
-                                    <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleProjectInvitation(invitation.project_id, false)}>
-                                        <X className="h-3 w-3" />
-                                    </Button>
-                                    <Button size="icon" className="h-7 w-7" onClick={() => handleProjectInvitation(invitation.project_id, true)}>
-                                        <Check className="h-3 w-3" />
-                                    </Button>
+                                <div className="truncate">
+                                    <p className="text-sm font-medium truncate text-muted-foreground">
+                                        {invitation.project?.title || "Project Invitation"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                        {invitation.status === 'active' ? 'Joined' : 'Declined'} • {invitation.project?.owner?.display_name || "Owner"}
+                                    </p>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                            <Badge variant={invitation.status === 'active' ? 'default' : 'destructive'} className="text-[10px] h-5">
+                                {invitation.status === 'active' ? 'Accepted' : 'Declined'}
+                            </Badge>
+                        </div>
+                    ))}
+
+                    {/* Historic Friend Requests */}
+                    {friendRequests.filter(r => r.status !== 'pending').map(request => (
+                        <div key={request.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 opacity-70">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                    <UserPlus className="h-4 w-4 text-gray-500" />
+                                </div>
+                                <div className="truncate">
+                                    <p className="text-sm font-medium truncate text-muted-foreground">
+                                        {request.sender?.display_name || "User"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                        {request.status === 'accepted' ? 'Friend Added' : 'Request Declined'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Badge variant={request.status === 'accepted' ? 'default' : 'destructive'} className="text-[10px] h-5">
+                                {request.status === 'accepted' ? 'Accepted' : 'Declined'}
+                            </Badge>
+                        </div>
                     ))}
                 </div>
             )}
