@@ -179,7 +179,13 @@ export function UserMultiSelect({ selectedUsers, onSelectionChange }: UserMultiS
                                     onSelect={() => toggleUser(user.id)}
                                     className="cursor-pointer aria-disabled:opacity-100 aria-disabled:pointer-events-auto"
                                 >
-                                    <div className="flex items-center gap-2 w-full">
+                                    <div
+                                        className="flex items-center gap-2 w-full"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            toggleUser(user.id)
+                                        }}
+                                    >
                                         <div className={cn(
                                             "flex items-center justify-center w-4 h-4 border rounded-sm mr-2",
                                             selectedUsers.includes(user.id)

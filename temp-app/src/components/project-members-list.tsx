@@ -27,6 +27,7 @@ interface ProjectMembersListProps {
 }
 
 export function ProjectMembersList({ members, currentUserId }: ProjectMembersListProps) {
+    const router = useRouter()
     const activeMembers = members.filter(m => m.status === 'active' || m.status === 'pending')
 
     return (
@@ -47,29 +48,34 @@ export function ProjectMembersList({ members, currentUserId }: ProjectMembersLis
                             return (
                                 <div key={member.user_id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="relative">
-                                            <Avatar
-                                                className="h-7 w-7 border-2"
-                                                style={{ borderColor: memberColor }}
-                                            >
-                                                <AvatarImage src={member.profile.avatar_url || ""} />
-                                                <AvatarFallback className="text-[10px]">
-                                                    <User className="h-3 w-3" />
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            {member.role === 'admin' && (
-                                                <Crown className="h-2.5 w-2.5 text-yellow-500 absolute -top-1 -right-1 bg-background rounded-full" />
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-xs font-medium leading-none truncate max-w-[80px]">
-                                                    {member.profile.display_name || member.profile.username}
+                                        <div
+                                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                            onClick={() => router.push(member.user_id === currentUserId ? '/profile' : `/users/${member.user_id}`)}
+                                        >
+                                            <div className="relative">
+                                                <Avatar
+                                                    className="h-7 w-7 border-2"
+                                                    style={{ borderColor: memberColor }}
+                                                >
+                                                    <AvatarImage src={member.profile.avatar_url || ""} />
+                                                    <AvatarFallback className="text-[10px]">
+                                                        <User className="h-3 w-3" />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                {member.role === 'admin' && (
+                                                    <Crown className="h-2.5 w-2.5 text-yellow-500 absolute -top-1 -right-1 bg-background rounded-full" />
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-xs font-medium leading-none truncate max-w-[80px]">
+                                                        {member.profile.display_name || member.profile.username}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[10px] text-muted-foreground capitalize leading-none">
+                                                    {member.role}
                                                 </span>
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground capitalize leading-none">
-                                                {member.role}
-                                            </span>
                                         </div>
                                     </div>
                                     {member.status === 'pending' && (
