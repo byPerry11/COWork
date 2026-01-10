@@ -31,7 +31,7 @@ export function ProjectMembersList({ members, currentUserId }: ProjectMembersLis
     const activeMembers = members.filter(m => m.status === 'active' || m.status === 'pending')
 
     return (
-        <Card className="h-full">
+        <Card className="">
             <CardHeader className="pb-2 pt-4 px-4">
                 <CardTitle className="flex justify-between items-center text-base">
                     Team
@@ -39,7 +39,7 @@ export function ProjectMembersList({ members, currentUserId }: ProjectMembersLis
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-                <ScrollArea className="h-[150px] pr-3">
+                <ScrollArea className="h-[120px] pr-3">
                     <div className="space-y-3">
                         {activeMembers.map((member) => {
                             // Enforce purlple for admin

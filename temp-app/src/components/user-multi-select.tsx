@@ -177,7 +177,7 @@ export function UserMultiSelect({ selectedUsers, onSelectionChange }: UserMultiS
                                     key={user.id}
                                     value={`${user.username || ''}-${user.id}`}
                                     onSelect={() => toggleUser(user.id)}
-                                    className="cursor-pointer aria-disabled:opacity-100 aria-disabled:pointer-events-auto"
+                                    className="cursor-pointer data-[disabled]:opacity-100 data-[disabled]:pointer-events-auto"
                                 >
                                     <div
                                         className="flex items-center gap-2 w-full"
