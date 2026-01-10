@@ -5,15 +5,28 @@ import { usePathname } from "next/navigation"
 import { Home, User, Bell, FolderKanban } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
 export function FloatingNav() {
   const pathname = usePathname()
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data } = await supabase.from('profiles').select('avatar_url').eq('id', session.user.id).single()
+        if (data) setAvatarUrl(data.avatar_url)
+      }
+    }
+    fetchAvatar()
+  }, [])
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Home" },
-    { href: "/profile", icon: User, label: "Profile" },
     { href: "/dashboard/projects", icon: FolderKanban, label: "Projects" },
-    { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },
+    { href: "/profile", icon: User, label: "Profile", isProfile: true },
   ]
 
   return (
@@ -23,8 +36,7 @@ export function FloatingNav() {
           const Icon = item.icon
           const isActive =
             (item.href === "/dashboard" && pathname === "/dashboard") ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href)) ||
-            (item.label === "Projects" && pathname.startsWith("/projects"))
+            (item.href !== "/dashboard" && pathname.startsWith(item.href))
 
           return (
             <Link
@@ -45,7 +57,15 @@ export function FloatingNav() {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-              <Icon className="h-5 w-5 relative z-10" />
+              {/* Profile Avatar or Icon */}
+              {/* @ts-ignore */}
+              {item.isProfile && avatarUrl ? (
+                <div className="relative z-10 w-6 h-6 rounded-full overflow-hidden ring-1 ring-white/20">
+                  <img src={avatarUrl} alt="Me" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <Icon className="h-5 w-5 relative z-10" />
+              )}
             </Link>
           )
         })}

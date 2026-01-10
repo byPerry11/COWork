@@ -8,7 +8,8 @@ import { Loader2 } from "lucide-react"
 import { ProjectCard } from "@/components/project-card"
 import { CalendarWidget } from "@/components/calendar-widget"
 import { GlobalSearchBar } from "@/components/global-search-bar"
-import { UserAvatarMenu } from "@/components/user-avatar-menu"
+import { Bell } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface UserProject {
   id: string
@@ -145,7 +146,9 @@ export default function DashboardPage() {
               <div className="flex-1 md:flex-initial">
                 <GlobalSearchBar />
               </div>
-              <UserAvatarMenu />
+              <Button size="icon" variant="ghost" className="rounded-full" onClick={() => router.push('/dashboard/notifications')}>
+                <Bell className="h-5 w-5" />
+              </Button>
             </div>
           </div>
 
