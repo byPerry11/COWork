@@ -109,7 +109,7 @@ export function GlobalSearchBar() {
 
     const handleSelect = (result: SearchResult) => {
         if (result.type === "user") {
-            router.push(`/profile?user=${result.id}`)
+            router.push(`/users/${result.id}`)
         } else {
             router.push(`/projects/${result.id}`)
         }

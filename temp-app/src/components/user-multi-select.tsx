@@ -175,17 +175,16 @@ export function UserMultiSelect({ selectedUsers, onSelectionChange }: UserMultiS
                             {users.map((user) => (
                                 <CommandItem
                                     key={user.id}
-                                    value={user.username || user.id}
+                                    value={`${user.username || ''}-${user.id}`}
                                     onSelect={() => toggleUser(user.id)}
-                                    className="cursor-pointer"
-                                    disabled={false}
+                                    className="cursor-pointer aria-disabled:opacity-100 aria-disabled:pointer-events-auto"
                                 >
                                     <div className="flex items-center gap-2 w-full">
                                         <div className={cn(
                                             "flex items-center justify-center w-4 h-4 border rounded-sm mr-2",
                                             selectedUsers.includes(user.id)
                                                 ? "bg-primary border-primary text-primary-foreground"
-                                                : "border-primary opacity-50"
+                                                : "border-primary/50"
                                         )}>
                                             <Check className={cn("h-3 w-3", selectedUsers.includes(user.id) ? "opacity-100" : "opacity-0")} />
                                         </div>

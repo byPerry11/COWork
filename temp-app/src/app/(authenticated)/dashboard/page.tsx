@@ -30,6 +30,8 @@ export default function DashboardPage() {
   const [displayName, setDisplayName] = useState("")
   const [projects, setProjects] = useState<UserProject[]>([])
 
+  const [hasNotifications, setHasNotifications] = useState(false)
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -46,6 +48,27 @@ export default function DashboardPage() {
         .single()
 
       setDisplayName(profile?.display_name || profile?.username || "User")
+
+      const checkNotifications = async () => {
+        // Check pending friend requests
+        const { count: friendRequests } = await supabase
+          .from('friend_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('receiver_id', session.user.id)
+          .eq('status', 'pending')
+
+        // Check pending project invites
+        const { count: projectInvites } = await supabase
+          .from('project_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id)
+          .eq('status', 'pending')
+
+        if ((friendRequests || 0) > 0 || (projectInvites || 0) > 0) {
+          setHasNotifications(true)
+        }
+      }
+      checkNotifications()
 
       const fetchProjects = async (userId: string) => {
         const { data: projectMembers } = await supabase
@@ -146,8 +169,11 @@ export default function DashboardPage() {
               <div className="flex-1 md:flex-initial">
                 <GlobalSearchBar />
               </div>
-              <Button size="icon" variant="ghost" className="rounded-full" onClick={() => router.push('/dashboard/notifications')}>
+              <Button size="icon" variant="ghost" className="rounded-full relative" onClick={() => router.push('/dashboard/notifications')}>
                 <Bell className="h-5 w-5" />
+                {hasNotifications && (
+                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border border-white" />
+                )}
               </Button>
             </div>
           </div>
