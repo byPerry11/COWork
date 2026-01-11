@@ -6,11 +6,7 @@ import { toast } from "sonner"
 
 export interface FriendRequest {
     id: string
-    sender: {
-        username: string
-        display_name: string | null
-        avatar_url: string | null
-    }
+    sender_id: string
     created_at: string
     status: 'pending' | 'accepted' | 'rejected'
 }
@@ -56,7 +52,7 @@ export function useNotifications() {
                     id,
                     created_at,
                     status,
-                    sender:sender_id(username, display_name, avatar_url)
+                    sender_id
                 `)
                 .eq('receiver_id', user.id)
                 .in('status', ['pending', 'accepted', 'rejected'])

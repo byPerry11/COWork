@@ -140,10 +140,10 @@ export function NotificationsList({ embedded = false }: NotificationsListProps) 
                                     </div>
                                     <div className="truncate">
                                         <p className="text-sm font-medium truncate">
-                                            {request.sender?.display_name || request.sender?.username || "User"}
+                                            Friend Request
                                         </p>
                                         <p className="text-xs text-muted-foreground truncate">
-                                            @{request.sender?.username}
+                                            Pending
                                         </p>
                                     </div>
                                 </div>
@@ -197,10 +197,10 @@ export function NotificationsList({ embedded = false }: NotificationsListProps) 
                                 </div>
                                 <div className="truncate">
                                     <p className="text-sm font-medium truncate text-muted-foreground">
-                                        {request.sender?.display_name || "User"}
+                                        {request.status === 'accepted' ? 'Friend Added' : 'Request Declined'}
                                     </p>
                                     <p className="text-xs text-muted-foreground truncate">
-                                        {request.status === 'accepted' ? 'Friend Added' : 'Request Declined'}
+                                        {request.status === 'accepted' ? 'Accepted' : 'Declined'}
                                     </p>
                                 </div>
                             </div>

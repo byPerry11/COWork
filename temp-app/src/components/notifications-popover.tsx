@@ -110,7 +110,7 @@ export function NotificationsPopover({ children }: { children?: React.ReactNode 
                             {friendRequests.map((req) => (
                                 <div key={req.id} className="flex items-center justify-between p-4 border-b hover:bg-muted/50">
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-medium">{req.sender.display_name || req.sender.username}</span>
+                                        <span className="text-sm font-medium">Friend request</span>
                                         <span className="text-xs text-muted-foreground">sent a friend request</span>
                                     </div>
                                     <div className="flex gap-1">
