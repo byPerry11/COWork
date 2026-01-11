@@ -2,6 +2,18 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+    // Skip middleware for static files and API routes
+    const { pathname } = request.nextUrl
+
+    // Public routes that don't require authentication
+    const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/verify-email']
+    const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+
+    // Skip for API routes
+    if (pathname.startsWith('/api')) {
+        return NextResponse.next()
+    }
+
     let supabaseResponse = NextResponse.next({
         request,
     })
@@ -27,31 +39,27 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // Get user session
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    // Use getSession instead of getUser - it's faster and uses cached data
+    const { data: { session } } = await supabase.auth.getSession()
 
-    // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/verify-email']
-    const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
-
-    // API routes should be handled separately
-    if (request.nextUrl.pathname.startsWith('/api')) {
-        return supabaseResponse
-    }
-
-    // If user is not logged in and trying to access protected route
-    if (!user && !isPublicRoute && request.nextUrl.pathname !== '/') {
+    // Root path - redirect based on auth status
+    if (pathname === '/') {
         const url = request.nextUrl.clone()
-        url.pathname = '/login'
+        url.pathname = session ? '/dashboard' : '/login'
         return NextResponse.redirect(url)
     }
 
-    // If user is logged in and trying to access login/public auth pages
-    if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/')) {
+    // Authenticated user trying to access login page
+    if (session && pathname === '/login') {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+    }
+
+    // Unauthenticated user trying to access protected route
+    if (!session && !isPublicRoute) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
@@ -61,12 +69,10 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - public files (images, etc.)
+         * Match all request paths except:
+         * - _next/static, _next/image (Next.js internals)
+         * - favicon.ico, public assets
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
     ],
 }
