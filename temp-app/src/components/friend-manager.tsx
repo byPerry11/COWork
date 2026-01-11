@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Check, X, User } from "lucide-react"
+import { Loader2, Check, X, User, Users, Clock } from "lucide-react"
 import { toast } from "sonner"
 import { UserSearch } from "@/components/user-search"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Profile {
     id: string
@@ -32,7 +33,10 @@ interface SentRequest {
     receiver: Profile
 }
 
+type TabType = 'friends' | 'requests'
+
 export function FriendManager({ userId }: { userId: string }) {
+    const [activeTab, setActiveTab] = useState<TabType>('friends')
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [friends, setFriends] = useState<Profile[]>([])
     const [requests, setRequests] = useState<FriendRequest[]>([])
@@ -180,6 +184,14 @@ export function FriendManager({ userId }: { userId: string }) {
         }
     }
 
+    const totalRequests = requests.length + sentRequests.length
+
+    const tabVariants = {
+        hidden: { opacity: 0, x: 20 },
+        visible: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: -20 }
+    }
+
     return (
         <div className="space-y-6">
             {/* Search Section */}
@@ -193,116 +205,189 @@ export function FriendManager({ userId }: { userId: string }) {
                 </CardContent>
             </Card>
 
-            <div className="grid md:grid-cols-2 gap-6">
-                {/* Pending Requests (Received) */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            Received Requests
-                            {requests.length > 0 && <Badge variant="destructive">{requests.length}</Badge>}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {loading && requests.length === 0 ? (
-                            <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
-                        ) : requests.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">No pending requests.</p>
-                        ) : (
-                            requests.map((req) => (
-                                <div key={req.id} className="flex items-center justify-between p-2 border rounded-md">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={req.sender.avatar_url || ""} />
-                                            <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{req.sender.display_name || req.sender.username}</span>
-                                            <span className="text-xs text-muted-foreground">@{req.sender.username}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => handleResponse(req.id, 'accepted')}>
-                                            <Check className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600" onClick={() => handleResponse(req.id, 'rejected')}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Sent Requests (Pending) */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            Sent Requests
-                            {sentRequests.length > 0 && <Badge variant="secondary">{sentRequests.length}</Badge>}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {loading && sentRequests.length === 0 ? (
-                            <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
-                        ) : sentRequests.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">No pending sent requests.</p>
-                        ) : (
-                            sentRequests.map((req) => (
-                                <div key={req.id} className="flex items-center justify-between p-2 border rounded-md">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={req.receiver.avatar_url || ""} />
-                                            <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{req.receiver.display_name || req.receiver.username}</span>
-                                            <span className="text-xs text-muted-foreground">@{req.receiver.username}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="text-xs text-orange-600 hover:text-orange-700"
-                                            onClick={() => cancelRequest(req.id)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Friends List */}
+            {/* Unified Friends/Requests Card */}
             <Card>
-                <CardHeader>
-                    <CardTitle>My Friends</CardTitle>
+                <CardHeader className="pb-3">
+                    {/* Custom Tab Selector */}
+                    <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                        <button
+                            onClick={() => setActiveTab('friends')}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'friends'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                        >
+                            <Users className="h-4 w-4" />
+                            My Friends
+                            {friends.length > 0 && (
+                                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                                    {friends.length}
+                                </Badge>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('requests')}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'requests'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                        >
+                            <Clock className="h-4 w-4" />
+                            Requests
+                            {totalRequests > 0 && (
+                                <Badge variant={requests.length > 0 ? "destructive" : "secondary"} className="ml-1 h-5 px-1.5">
+                                    {totalRequests}
+                                </Badge>
+                            )}
+                        </button>
+                    </div>
                 </CardHeader>
-                <CardContent>
-                    {loading && friends.length === 0 ? (
-                        <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
-                    ) : friends.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">No friends added yet.</p>
-                    ) : (
-                        <div className="space-y-2">
-                            {friends.map((friend) => (
-                                <div key={friend.id} className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-md">
-                                    <Avatar>
-                                        <AvatarImage src={friend.avatar_url || ""} />
-                                        <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium">{friend.display_name || friend.username}</span>
-                                        <span className="text-xs text-muted-foreground">@{friend.username}</span>
+
+                <CardContent className="min-h-[200px]">
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'friends' && (
+                            <motion.div
+                                key="friends"
+                                variants={tabVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                            >
+                                {loading && friends.length === 0 ? (
+                                    <div className="flex justify-center p-8">
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                ) : friends.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                                        <Users className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                                        <p className="text-sm text-muted-foreground">No friends added yet.</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Use the search above to find people!</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {friends.map((friend, index) => (
+                                            <motion.div
+                                                key={friend.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors"
+                                            >
+                                                <Avatar>
+                                                    <AvatarImage src={friend.avatar_url || ""} />
+                                                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{friend.display_name || friend.username}</span>
+                                                    <span className="text-xs text-muted-foreground">@{friend.username}</span>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'requests' && (
+                            <motion.div
+                                key="requests"
+                                variants={tabVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                                className="space-y-4"
+                            >
+                                {loading && totalRequests === 0 ? (
+                                    <div className="flex justify-center p-8">
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : totalRequests === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                                        <Clock className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                                        <p className="text-sm text-muted-foreground">No pending requests.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Received Requests */}
+                                        {requests.length > 0 && (
+                                            <div className="space-y-2">
+                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                                                    Received ({requests.length})
+                                                </h4>
+                                                {requests.map((req, index) => (
+                                                    <motion.div
+                                                        key={req.id}
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: index * 0.05 }}
+                                                        className="flex items-center justify-between p-3 border rounded-lg bg-green-50/50 dark:bg-green-950/20"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9">
+                                                                <AvatarImage src={req.sender.avatar_url || ""} />
+                                                                <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium">{req.sender.display_name || req.sender.username}</span>
+                                                                <span className="text-xs text-muted-foreground">@{req.sender.username}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30" onClick={() => handleResponse(req.id, 'accepted')}>
+                                                                <Check className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30" onClick={() => handleResponse(req.id, 'rejected')}>
+                                                                <X className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Sent Requests */}
+                                        {sentRequests.length > 0 && (
+                                            <div className="space-y-2">
+                                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                                                    Sent ({sentRequests.length})
+                                                </h4>
+                                                {sentRequests.map((req, index) => (
+                                                    <motion.div
+                                                        key={req.id}
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: (requests.length + index) * 0.05 }}
+                                                        className="flex items-center justify-between p-3 border rounded-lg"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9">
+                                                                <AvatarImage src={req.receiver.avatar_url || ""} />
+                                                                <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium">{req.receiver.display_name || req.receiver.username}</span>
+                                                                <span className="text-xs text-muted-foreground">@{req.receiver.username}</span>
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                                            onClick={() => cancelRequest(req.id)}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </CardContent>
             </Card>
         </div>
