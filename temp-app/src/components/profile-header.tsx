@@ -107,13 +107,15 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
         <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-card rounded-xl border shadow-sm">
             {/* Avatar with Status */}
             <div className="relative">
-                <Avatar className="w-24 h-24 border-4 border-background shadow-md">
+                <Avatar className="w-24 h-24 ring-4 ring-primary/30">
                     <AvatarImage src={profile.avatar_url} />
                     <AvatarFallback className="text-2xl">{profile.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                {/* Status indicator */}
-                <div className="absolute -bottom-0.5 -right-0.5 text-base bg-background rounded-full p-0.5 shadow-sm">
-                    {STATUS_EMOJI[userStatus]}
+                {/* Discord-style Status indicator */}
+                <div className="absolute bottom-0.5 right-0.5">
+                    <div className={`w-4 h-4 rounded-full ring-4 ring-card ${userStatus === 'online' ? 'bg-green-500' :
+                            userStatus === 'away' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} />
                 </div>
             </div>
 

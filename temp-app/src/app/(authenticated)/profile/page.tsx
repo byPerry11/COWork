@@ -3,19 +3,17 @@
 import { useEffect, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { Loader2, Edit, Users, FolderKanban, Award, LogOut } from "lucide-react"
+import { Loader2, Edit, Users, FolderKanban, Award, LogOut, ChevronDown } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 import { ProfileEditForm } from "@/components/profile-edit-form"
 import { AvatarUpload } from "@/components/avatar-upload"
@@ -146,44 +144,66 @@ export default function ProfilePage() {
                                 {/* Avatar with Status Indicator */}
                                 <div className="flex justify-center md:justify-start">
                                     <div className="relative">
-                                        <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-primary/20">
+                                        <Avatar className="h-32 w-32 md:h-40 md:w-40 ring-4 ring-primary/30">
                                             <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || profile.username} />
                                             <AvatarFallback className="text-4xl font-bold bg-primary/10 text-primary">
                                                 {getInitials()}
                                             </AvatarFallback>
                                         </Avatar>
-                                        {/* Status Indicator Emoji */}
-                                        <div className="absolute -bottom-0.5 -right-0.5 text-base bg-background rounded-full p-0.5 shadow-sm">
-                                            {userStatus === 'online' && '🟢'}
-                                            {userStatus === 'away' && '🟡'}
-                                            {userStatus === 'dnd' && '🔴'}
+                                        {/* Discord-style Status Indicator */}
+                                        <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2">
+                                            <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full ring-4 ring-card ${userStatus === 'online' ? 'bg-green-500' :
+                                                    userStatus === 'away' ? 'bg-yellow-500' : 'bg-red-500'
+                                                }`} />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Profile Info */}
                                 <div className="flex-1 space-y-4">
-                                    {/* Display Name & Username */}
+                                    {/* Display Name with Status Selector */}
                                     <div className="text-center md:text-left">
-                                        <h1 className="text-2xl md:text-3xl font-bold">
-                                            {profile.display_name || profile.username}
-                                        </h1>
+                                        <div className="flex items-center justify-center md:justify-start gap-1">
+                                            <h1 className="text-2xl md:text-3xl font-bold">
+                                                {profile.display_name || profile.username}
+                                            </h1>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                                                        <ChevronDown className="h-4 w-4" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-48 p-1" align="start">
+                                                    <div className="space-y-0.5">
+                                                        <button
+                                                            onClick={() => handleStatusChange('online')}
+                                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors ${userStatus === 'online' ? 'bg-muted' : ''
+                                                                }`}
+                                                        >
+                                                            <div className="w-3 h-3 rounded-full bg-green-500" />
+                                                            Online
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleStatusChange('away')}
+                                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors ${userStatus === 'away' ? 'bg-muted' : ''
+                                                                }`}
+                                                        >
+                                                            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                                                            Away
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleStatusChange('dnd')}
+                                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors ${userStatus === 'dnd' ? 'bg-muted' : ''
+                                                                }`}
+                                                        >
+                                                            <div className="w-3 h-3 rounded-full bg-red-500" />
+                                                            Do Not Disturb
+                                                        </button>
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
                                         <p className="text-muted-foreground">@{profile.username}</p>
-                                    </div>
-
-                                    {/* Status Selector */}
-                                    <div className="flex items-center gap-2 justify-center md:justify-start">
-                                        <span className="text-sm text-muted-foreground">Status:</span>
-                                        <Select value={userStatus} onValueChange={(value: 'online' | 'away' | 'dnd') => handleStatusChange(value)}>
-                                            <SelectTrigger className="w-32 h-8 text-xs">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="online">🟢 Online</SelectItem>
-                                                <SelectItem value="away">🟡 Away</SelectItem>
-                                                <SelectItem value="dnd">🔴 Do Not Disturb</SelectItem>
-                                            </SelectContent>
-                                        </Select>
                                     </div>
 
                                     {/* Stats */}
