@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2, User, Crown, Shield } from "lucide-react"
+import { Loader2, User, Crown, Shield, UserPlus } from "lucide-react"
+import { ManageMembersDialog } from "@/components/manage-members-dialog"
 
 interface ProjectMember {
     user_id: string
@@ -24,9 +25,10 @@ interface ProjectMember {
 interface ProjectMembersListProps {
     members: ProjectMember[]
     currentUserId: string
+    projectId: string
 }
 
-export function ProjectMembersList({ members, currentUserId }: ProjectMembersListProps) {
+export function ProjectMembersList({ members, currentUserId, projectId }: ProjectMembersListProps) {
     const router = useRouter()
     const activeMembers = members.filter(m => m.status === 'active' || m.status === 'pending')
 
@@ -35,7 +37,10 @@ export function ProjectMembersList({ members, currentUserId }: ProjectMembersLis
             <CardHeader className="pb-2 pt-4 px-4">
                 <CardTitle className="flex justify-between items-center text-base">
                     Team
-                    <Badge variant="secondary" className="text-xs h-5 px-1">{activeMembers.length}</Badge>
+                    <div className="flex items-center gap-1">
+                        <ManageMembersDialog projectId={projectId} />
+                        <Badge variant="secondary" className="text-xs h-5 px-1">{activeMembers.length}</Badge>
+                    </div>
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
@@ -92,3 +97,4 @@ export function ProjectMembersList({ members, currentUserId }: ProjectMembersLis
         </Card>
     )
 }
+

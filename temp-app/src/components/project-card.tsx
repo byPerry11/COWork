@@ -37,7 +37,6 @@ export function ProjectCard({
     onRespond
 }: ProjectCardProps) {
     const isPending = membershipStatus === "pending"
-    console.log('🎴 ProjectCard render:', { title, membershipStatus, isPending })
     const roleColors = {
         admin: "bg-purple-500",
         manager: "bg-blue-500",

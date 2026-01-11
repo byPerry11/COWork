@@ -153,44 +153,29 @@ export function useNotifications() {
     }
 
     const handleProjectInvitation = async (projectId: string, accept: boolean) => {
-        console.log('🔵 handleProjectInvitation starting:', { projectId, accept })
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            console.error('❌ No user found in handleProjectInvitation')
-            return
-        }
-        console.log('👤 User:', user.id)
+        if (!user) return
 
         if (accept) {
-            console.log('🔄 Updating status to "active"...')
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from("project_members")
                 .update({ status: "active" })
                 .eq("project_id", projectId)
                 .eq("user_id", user.id)
-                .select()
-
-            console.log('📊 Update result:', { data, error })
 
             if (error) {
-                console.error('❌ Failed to accept invitation:', error)
                 toast.error("Failed to accept invitation")
                 return
             }
             toast.success("Joined project successfully")
         } else {
-            console.log('🔄 Updating status to "rejected"...')
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from("project_members")
                 .update({ status: "rejected" })
                 .eq("project_id", projectId)
                 .eq("user_id", user.id)
-                .select()
-
-            console.log('📊 Update result:', { data, error })
 
             if (error) {
-                console.error('❌ Failed to decline invitation:', error)
                 toast.error("Failed to decline invitation")
                 return
             }

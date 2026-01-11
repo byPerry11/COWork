@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { CheckpointList } from "@/components/checkpoint-list"
 import { AddCheckpointDialog } from "@/components/add-checkpoint-dialog"
-import { ManageMembersDialog } from "@/components/manage-members-dialog"
 import { ProjectMembersList } from "@/components/project-members-list"
 import { LeaveProjectDialog } from "@/components/leave-project-dialog"
 import { DeleteProjectDialog } from "@/components/delete-project-dialog"
@@ -190,7 +189,6 @@ function ProjectDetailContent() {
             ) : (
               <LeaveProjectDialog projectId={project.id} projectTitle={project.title} />
             )}
-            <ManageMembersDialog projectId={project.id} />
             <AddCheckpointDialog projectId={project.id} onSuccess={handleCheckpointAdded} />
           </div>
         </header>
@@ -262,7 +260,7 @@ function ProjectDetailContent() {
 
             {/* Sidebar Column */}
             <div className="lg:col-span-1 space-y-6">
-              <ProjectMembersList members={members} currentUserId={currentUserId} />
+              <ProjectMembersList members={members} currentUserId={currentUserId} projectId={project.id} />
 
               {project && (
                 <ProjectCalendar

@@ -72,13 +72,13 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
 
     const fetchMembers = async () => {
         setLoading(true)
-        
+
         // 1. Fetch project members
         const { data: membersData, error: membersError } = await supabase
             .from('project_members')
             .select('user_id, role, joined_at')
             .eq('project_id', projectId)
-        
+
         if (membersError) {
             toast.error("Failed to load members")
             console.error(membersError)
@@ -115,7 +115,7 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
                 } : { username: 'Unknown', display_name: 'Unknown User' }
             }
         })
-        
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setMembers(combinedMembers as any)
         setLoading(false)
@@ -199,9 +199,8 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <UserPlus className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">Manage Members</span>
+                <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary">
+                    <UserPlus className="h-3.5 w-3.5" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">

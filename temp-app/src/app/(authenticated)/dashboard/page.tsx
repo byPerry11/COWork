@@ -113,13 +113,7 @@ export default function DashboardPage() {
         })
     )
 
-    console.log('🔍 Projects with membership status:', projectsWithProgress.map(p => ({
-      title: p.title,
-      membershipStatus: p.membershipStatus
-    })))
-
     setProjects(projectsWithProgress)
-    console.log('🟢 Projects state updated:', projectsWithProgress.length, 'projects')
   }, [])
 
 
@@ -155,8 +149,6 @@ export default function DashboardPage() {
   }
 
   const handleInvitationResponse = async (projectId: string, accept: boolean) => {
-    console.log('🔵 handleInvitationResponse called:', { projectId, accept, sessionUserId })
-
     // Optimistic update: immediately update UI
     if (accept) {
       setProjects(prev => prev.map(p =>
@@ -171,7 +163,6 @@ export default function DashboardPage() {
 
     // Update database (don't refresh immediately to avoid race condition)
     await handleProjectInvitation(projectId, accept)
-    console.log('🟢 handleProjectInvitation completed - UI already updated optimistically')
   }
 
   if (loading) {
