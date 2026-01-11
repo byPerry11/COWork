@@ -169,14 +169,9 @@ export default function DashboardPage() {
       setProjects(prev => prev.filter(p => p.id !== projectId))
     }
 
-    // Then update database and refresh
+    // Update database (don't refresh immediately to avoid race condition)
     await handleProjectInvitation(projectId, accept)
-    console.log('🟢 handleProjectInvitation completed')
-    if (sessionUserId) {
-      console.log('🔵 Calling fetchProjects...')
-      await fetchProjects(sessionUserId)
-      console.log('🟢 fetchProjects completed')
-    }
+    console.log('🟢 handleProjectInvitation completed - UI already updated optimistically')
   }
 
   if (loading) {
