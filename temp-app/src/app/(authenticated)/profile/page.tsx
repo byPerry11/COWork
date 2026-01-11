@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 import { ProfileEditForm } from "@/components/profile-edit-form"
 import { AvatarUpload } from "@/components/avatar-upload"
@@ -146,7 +153,7 @@ export default function ProfilePage() {
                                             </AvatarFallback>
                                         </Avatar>
                                         {/* Status Indicator Emoji */}
-                                        <div className="absolute -bottom-1 -right-1 text-xl bg-background rounded-full p-1 shadow-md border-2 border-background">
+                                        <div className="absolute -bottom-0.5 -right-0.5 text-base bg-background rounded-full p-0.5 shadow-sm">
                                             {userStatus === 'online' && '🟢'}
                                             {userStatus === 'away' && '🟡'}
                                             {userStatus === 'dnd' && '🔴'}
@@ -167,32 +174,16 @@ export default function ProfilePage() {
                                     {/* Status Selector */}
                                     <div className="flex items-center gap-2 justify-center md:justify-start">
                                         <span className="text-sm text-muted-foreground">Status:</span>
-                                        <div className="flex gap-1">
-                                            <Button
-                                                variant={userStatus === 'online' ? 'default' : 'ghost'}
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => handleStatusChange('online')}
-                                            >
-                                                🟢 Online
-                                            </Button>
-                                            <Button
-                                                variant={userStatus === 'away' ? 'default' : 'ghost'}
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => handleStatusChange('away')}
-                                            >
-                                                🟡 Away
-                                            </Button>
-                                            <Button
-                                                variant={userStatus === 'dnd' ? 'default' : 'ghost'}
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => handleStatusChange('dnd')}
-                                            >
-                                                🔴 DND
-                                            </Button>
-                                        </div>
+                                        <Select value={userStatus} onValueChange={(value: 'online' | 'away' | 'dnd') => handleStatusChange(value)}>
+                                            <SelectTrigger className="w-32 h-8 text-xs">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="online">🟢 Online</SelectItem>
+                                                <SelectItem value="away">🟡 Away</SelectItem>
+                                                <SelectItem value="dnd">🔴 Do Not Disturb</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
 
                                     {/* Stats */}

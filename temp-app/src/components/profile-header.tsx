@@ -13,9 +13,18 @@ interface ProfileHeaderProps {
     currentUserId: string
 }
 
+type UserStatus = 'online' | 'away' | 'dnd'
+
+const STATUS_EMOJI: Record<UserStatus, string> = {
+    online: '🟢',
+    away: '🟡',
+    dnd: '🔴'
+}
+
 export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
     const [friendStatus, setFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'friends' | 'self'>('none')
     const [loading, setLoading] = useState(true)
+    const [userStatus, setUserStatus] = useState<UserStatus>('online')
     const router = useRouter()
 
     useEffect(() => {
@@ -26,16 +35,6 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
         }
 
         const checkFriendship = async () => {
-            // Check friends table (if exists) or friend_requests
-            // Assuming we check friend_requests for pending/accepted
-            // But usually friends are in 'friends' table if accepted?
-            // Wait, schema check needed. 
-            // In 'database_schema.sql', I didn't see 'friends' table, only 'friend_requests'.
-            // But 'supabase_update_friends.sql' (implied) might have it.
-            // Let's assume friend_requests with status='accepted' OR a separate friends table.
-            // 'prevent_duplicate_friend_request' checks 'friend_requests'.
-
-            // Check for accepted request
             const { data: requests } = await supabase
                 .from('friend_requests')
                 .select('*')
@@ -43,7 +42,6 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
                 .or(`sender_id.eq.${profile.id},receiver_id.eq.${profile.id}`)
 
             if (requests && requests.length > 0) {
-                // Filter specifically for the pair
                 const match = requests.find(r =>
                     (r.sender_id === currentUserId && r.receiver_id === profile.id) ||
                     (r.sender_id === profile.id && r.receiver_id === currentUserId)
@@ -61,6 +59,11 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
             setLoading(false)
         }
         checkFriendship()
+
+        // Set user status from profile (default to online if not set)
+        if (profile.user_status) {
+            setUserStatus(profile.user_status as UserStatus)
+        }
     }, [profile, currentUserId])
 
     const handleSendRequest = async () => {
@@ -80,8 +83,6 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
     }
 
     const handleAccept = async () => {
-        // Find the request first? 
-        // We know we are receiver.
         const { data: req } = await supabase.from('friend_requests')
             .select('id')
             .eq('sender_id', profile.id)
@@ -104,10 +105,17 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
 
     return (
         <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-card rounded-xl border shadow-sm">
-            <Avatar className="w-24 h-24 border-4 border-background shadow-md">
-                <AvatarImage src={profile.avatar_url} />
-                <AvatarFallback className="text-2xl">{profile.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            {/* Avatar with Status */}
+            <div className="relative">
+                <Avatar className="w-24 h-24 border-4 border-background shadow-md">
+                    <AvatarImage src={profile.avatar_url} />
+                    <AvatarFallback className="text-2xl">{profile.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                {/* Status indicator */}
+                <div className="absolute -bottom-0.5 -right-0.5 text-base bg-background rounded-full p-0.5 shadow-sm">
+                    {STATUS_EMOJI[userStatus]}
+                </div>
+            </div>
 
             <div className="flex-1 text-center md:text-left space-y-2">
                 <h1 className="text-2xl font-bold">{profile.display_name || profile.username}</h1>
@@ -149,3 +157,4 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
         </div>
     )
 }
+
