@@ -34,6 +34,10 @@ export default function ProfilePage() {
         achievements: 0
     })
 
+    // User status (Discord-style)
+    type UserStatusType = 'online' | 'away' | 'dnd'
+    const [userStatus, setUserStatus] = useState<UserStatusType>('online')
+
     useEffect(() => {
         const checkUser = async () => {
             const { data: { session } } = await supabase.auth.getSession()
@@ -109,6 +113,11 @@ export default function ProfilePage() {
         router.push("/login")
     }
 
+    const handleStatusChange = (status: 'online' | 'away' | 'dnd') => {
+        setUserStatus(status)
+        // TODO: Can persist to database if needed
+    }
+
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -127,47 +136,67 @@ export default function ProfilePage() {
                     <Card>
                         <CardContent className="p-6 md:p-8">
                             <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-                                {/* Avatar */}
+                                {/* Avatar with Status Indicator */}
                                 <div className="flex justify-center md:justify-start">
-                                    <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-primary/20">
-                                        <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || profile.username} />
-                                        <AvatarFallback className="text-4xl font-bold bg-primary/10 text-primary">
-                                            {getInitials()}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <div className="relative">
+                                        <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-primary/20">
+                                            <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || profile.username} />
+                                            <AvatarFallback className="text-4xl font-bold bg-primary/10 text-primary">
+                                                {getInitials()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        {/* Status Indicator Emoji */}
+                                        <div className="absolute -bottom-1 -right-1 text-xl bg-background rounded-full p-1 shadow-md border-2 border-background">
+                                            {userStatus === 'online' && '🟢'}
+                                            {userStatus === 'away' && '🟡'}
+                                            {userStatus === 'dnd' && '🔴'}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Profile Info */}
                                 <div className="flex-1 space-y-4">
-                                    {/* Username & Edit Button */}
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                    {/* Display Name & Username */}
+                                    <div className="text-center md:text-left">
                                         <h1 className="text-2xl md:text-3xl font-bold">
                                             {profile.display_name || profile.username}
                                         </h1>
-                                        <div className="flex gap-2 w-full sm:w-auto">
+                                        <p className="text-muted-foreground">@{profile.username}</p>
+                                    </div>
+
+                                    {/* Status Selector */}
+                                    <div className="flex items-center gap-2 justify-center md:justify-start">
+                                        <span className="text-sm text-muted-foreground">Status:</span>
+                                        <div className="flex gap-1">
                                             <Button
-                                                variant="outline"
+                                                variant={userStatus === 'online' ? 'default' : 'ghost'}
                                                 size="sm"
-                                                onClick={() => setIsEditMode(!isEditMode)}
-                                                className="flex-1 sm:flex-none"
+                                                className="h-7 px-2 text-xs"
+                                                onClick={() => handleStatusChange('online')}
                                             >
-                                                <Edit className="h-4 w-4 mr-2" />
-                                                Edit Profile
+                                                🟢 Online
                                             </Button>
                                             <Button
-                                                variant="destructive"
+                                                variant={userStatus === 'away' ? 'default' : 'ghost'}
                                                 size="sm"
-                                                onClick={handleLogout}
-                                                className="flex-1 sm:flex-none"
+                                                className="h-7 px-2 text-xs"
+                                                onClick={() => handleStatusChange('away')}
                                             >
-                                                <LogOut className="h-4 w-4 mr-2" />
-                                                Logout
+                                                🟡 Away
+                                            </Button>
+                                            <Button
+                                                variant={userStatus === 'dnd' ? 'default' : 'ghost'}
+                                                size="sm"
+                                                className="h-7 px-2 text-xs"
+                                                onClick={() => handleStatusChange('dnd')}
+                                            >
+                                                🔴 DND
                                             </Button>
                                         </div>
                                     </div>
 
                                     {/* Stats */}
-                                    <div className="flex gap-6 md:gap-8">
+                                    <div className="flex gap-6 md:gap-8 justify-center md:justify-start">
                                         <div className="flex flex-col items-center sm:items-start">
                                             <span className="text-xl md:text-2xl font-bold">{stats.projects}</span>
                                             <span className="text-sm text-muted-foreground">Projects</span>
@@ -182,16 +211,8 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
 
-                                    {/* Display name and username */}
-                                    <div className="space-y-1">
-                                        {profile.display_name && (
-                                            <p className="font-semibold">{profile.display_name}</p>
-                                        )}
-                                        <p className="text-sm text-muted-foreground">@{profile.username}</p>
-                                    </div>
-
                                     {/* Badges */}
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                                         <Badge variant="secondary" className="flex items-center gap-1">
                                             <FolderKanban className="h-3 w-3" />
                                             Active Member
@@ -204,6 +225,26 @@ export default function ProfilePage() {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Edit & Logout Buttons - At Bottom */}
+                            <div className="flex gap-2 mt-6 pt-6 border-t justify-center md:justify-end">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsEditMode(!isEditMode)}
+                                >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Profile
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={handleLogout}
+                                >
+                                    <LogOut className="h-4 w-4 mr-2" />
+                                    Logout
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
