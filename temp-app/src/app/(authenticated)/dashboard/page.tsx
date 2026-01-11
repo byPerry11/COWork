@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { Loader2 } from "lucide-react"
@@ -10,6 +10,7 @@ import { CalendarWidget } from "@/components/calendar-widget"
 import { GlobalSearchBar } from "@/components/global-search-bar"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/hooks/useNotifications"
+import { getRandomQuote, MotivationalQuote } from "@/lib/motivational-quotes"
 
 interface UserProject {
   id: string
@@ -34,6 +35,9 @@ export default function DashboardPage() {
 
   const [sessionUserId, setSessionUserId] = useState<string>("")
   const { handleProjectInvitation } = useNotifications()
+
+  // Get random motivational quote (stable per page load)
+  const randomQuote = useMemo(() => getRandomQuote(), [])
 
   const fetchProjects = useCallback(async (userId: string) => {
     // Note: We don't set loading(true) here to avoid flickering on refresh
@@ -185,8 +189,8 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold tracking-tight">
                 Hello, {displayName} 👋
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Welcome back! Here's what's happening with your projects.
+              <p className="text-sm text-muted-foreground italic">
+                "{randomQuote.text}" — <span className="font-medium">{randomQuote.author}</span>
               </p>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
