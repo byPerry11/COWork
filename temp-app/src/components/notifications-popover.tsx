@@ -11,11 +11,11 @@ import { useNotifications } from "@/hooks/useNotifications"
 
 export function NotificationsPopover({ children }: { children?: React.ReactNode }) {
     const [open, setOpen] = useState(false)
-    const { 
-        loading, 
-        unreadCount, 
-        friendRequests, 
-        projectInvites, 
+    const {
+        loading,
+        unreadCount,
+        friendRequests,
+        projectInvites,
         rejectedCheckpoints,
         refresh,
         handleFriendResponse,
@@ -45,10 +45,10 @@ export function NotificationsPopover({ children }: { children?: React.ReactNode 
                     <h4 className="font-semibold">Notifications</h4>
                     {unreadCount > 0 && <Badge variant="secondary">{unreadCount}</Badge>}
                 </div>
-                
+
                 <Tabs defaultValue="all" className="w-full">
                     <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
-                         <TabsTrigger value="all" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">All</TabsTrigger>
+                        <TabsTrigger value="all" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">All</TabsTrigger>
                     </TabsList>
                     <ScrollArea className="h-[300px]">
                         {loading && (
@@ -62,7 +62,7 @@ export function NotificationsPopover({ children }: { children?: React.ReactNode 
                                 <p className="text-sm">No new notifications</p>
                             </div>
                         )}
-                        
+
                         <div className="p-0">
                             {/* Rejected Checkpoints */}
                             {rejectedCheckpoints.map((checkpoint) => (
@@ -91,7 +91,7 @@ export function NotificationsPopover({ children }: { children?: React.ReactNode 
                                         <div>
                                             <p className="text-sm font-medium">Project Invitation</p>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                You have been invited to join <strong>{invite.project.title}</strong>
+                                                You have been invited to join <strong>{invite.project?.title || "a project"}</strong>
                                             </p>
                                         </div>
                                     </div>
