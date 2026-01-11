@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   const fetchProjects = useCallback(async (userId: string) => {
     // Note: We don't set loading(true) here to avoid flickering on refresh
-    const { data: projectMembers } = await supabase
+    const { data: projectMembers, error: fetchError } = await supabase
       .from("project_members")
       .select(`
             project_id,
@@ -56,6 +56,12 @@ export default function DashboardPage() {
         `)
       .eq("user_id", userId)
       .in("status", ["active", "pending"])
+
+    if (fetchError) {
+      console.error('❌ Error fetching projects:', fetchError)
+      setProjects([])
+      return
+    }
 
     if (!projectMembers) {
       setProjects([])
