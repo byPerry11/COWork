@@ -145,8 +145,8 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
       // Fetch checkpoint details for notification
       const { data: cpData } = await supabase
         .from('checkpoints')
-        .eq("id", checkpointId)
         .select('title, project_id, project:projects(title)')
+        .eq("id", checkpointId)
         .single()
 
        // Update Checkpoint
