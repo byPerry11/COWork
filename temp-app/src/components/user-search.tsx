@@ -17,7 +17,11 @@ interface Profile {
     avatar_url: string | null
 }
 
-export function UserSearch() {
+interface UserSearchProps {
+    onRequestSent?: () => void
+}
+
+export function UserSearch({ onRequestSent }: UserSearchProps) {
     const [userId, setUserId] = useState<string | null>(null)
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState("")
@@ -114,6 +118,8 @@ export function UserSearch() {
                     delete newMap[receiverId]
                     return newMap
                 })
+                // Trigger callback to refresh parent list
+                if (onRequestSent) onRequestSent()
             }, 1000)
 
         } catch (error: any) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -42,6 +43,7 @@ export function FriendManager({ userId }: { userId: string }) {
     const [requests, setRequests] = useState<FriendRequest[]>([])
     const [sentRequests, setSentRequests] = useState<SentRequest[]>([])
     const [loading, setLoading] = useState(true)
+    const router = useRouter()
 
     const fetchData = useCallback(async () => {
         setLoading(true)
@@ -201,7 +203,7 @@ export function FriendManager({ userId }: { userId: string }) {
                     <CardDescription>Search for users by username or display name to connect.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <UserSearch />
+                    <UserSearch onRequestSent={fetchData} />
                 </CardContent>
             </Card>
 
@@ -218,7 +220,7 @@ export function FriendManager({ userId }: { userId: string }) {
                                 }`}
                         >
                             <Users className="h-4 w-4" />
-                            My Friends
+                            Friends
                             {friends.length > 0 && (
                                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">
                                     {friends.length}
@@ -272,7 +274,8 @@ export function FriendManager({ userId }: { userId: string }) {
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: index * 0.05 }}
-                                                className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors"
+                                                className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
+                                                onClick={() => router.push(`/users/${friend.id}`)}
                                             >
                                                 <Avatar>
                                                     <AvatarImage src={friend.avatar_url || ""} />
@@ -324,7 +327,10 @@ export function FriendManager({ userId }: { userId: string }) {
                                                         transition={{ delay: index * 0.05 }}
                                                         className="flex items-center justify-between p-3 border rounded-lg bg-green-50/50 dark:bg-green-950/20"
                                                     >
-                                                        <div className="flex items-center gap-3">
+                                                        <div 
+                                                            className="flex items-center gap-3 cursor-pointer"
+                                                            onClick={() => router.push(`/users/${req.sender_id}`)}
+                                                        >
                                                             <Avatar className="h-9 w-9">
                                                                 <AvatarImage src={req.sender.avatar_url || ""} />
                                                                 <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
@@ -361,7 +367,10 @@ export function FriendManager({ userId }: { userId: string }) {
                                                         transition={{ delay: (requests.length + index) * 0.05 }}
                                                         className="flex items-center justify-between p-3 border rounded-lg"
                                                     >
-                                                        <div className="flex items-center gap-3">
+                                                        <div 
+                                                            className="flex items-center gap-3 cursor-pointer"
+                                                            onClick={() => router.push(`/users/${req.receiver_id}`)}
+                                                        >
                                                             <Avatar className="h-9 w-9">
                                                                 <AvatarImage src={req.receiver.avatar_url || ""} />
                                                                 <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
