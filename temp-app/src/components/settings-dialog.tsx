@@ -6,6 +6,7 @@ import { useTheme } from "next-themes"
 import { useState } from "react"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { Switch } from "@/components/ui/switch"
+import { PushDeviceList } from "@/components/push-device-list"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -86,6 +87,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   </p>
               </div>
               <NotificationToggle />
+            </div>
+            
+            <div className="pt-2">
+                <h5 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Active Devices</h5>
+                <PushDeviceList />
             </div>
           </div>
         </div>
