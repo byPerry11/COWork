@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { UserPlus, UserCheck, Check, MessageCircle, Settings } from "lucide-react"
+import { UserPlus, UserCheck, Check, MessageCircle, Settings, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
@@ -25,6 +25,7 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
     const [friendStatus, setFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'friends' | 'self'>('none')
     const [loading, setLoading] = useState(true)
     const [userStatus, setUserStatus] = useState<UserStatus>('online')
+    const [requestSending, setRequestSending] = useState(false)
     const router = useRouter()
 
     useEffect(() => {
@@ -67,12 +68,15 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
     }, [profile, currentUserId])
 
     const handleSendRequest = async () => {
+        setRequestSending(true)
         const { error } = await supabase
             .from('friend_requests')
             .insert({
                 sender_id: currentUserId,
                 receiver_id: profile.id
             })
+
+        setRequestSending(false)
 
         if (error) {
             toast.error("Failed to send request")
@@ -114,7 +118,7 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
                 {/* Discord-style Status indicator */}
                 <div className="absolute bottom-0.5 right-0.5">
                     <div className={`w-4 h-4 rounded-full ring-4 ring-card ${userStatus === 'online' ? 'bg-green-500' :
-                            userStatus === 'away' ? 'bg-yellow-500' : 'bg-red-500'
+                        userStatus === 'away' ? 'bg-yellow-500' : 'bg-red-500'
                         }`} />
                 </div>
             </div>
@@ -132,14 +136,18 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
                     </Button>
                 )}
                 {friendStatus === 'none' && !loading && (
-                    <Button onClick={handleSendRequest}>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Add Friend
+                    <Button onClick={handleSendRequest} disabled={requestSending}>
+                        {requestSending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <UserPlus className="mr-2 h-4 w-4" />
+                        )}
+                        {requestSending ? "Sending..." : "Add Friend"}
                     </Button>
                 )}
                 {friendStatus === 'pending_sent' && (
-                    <Button variant="secondary" disabled>
-                        <UserCheck className="mr-2 h-4 w-4" />
+                    <Button variant="secondary" disabled className="text-green-600 bg-green-100 dark:bg-green-900/30">
+                        <Check className="mr-2 h-4 w-4" />
                         Request Sent
                     </Button>
                 )}
@@ -159,4 +167,3 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
         </div>
     )
 }
-
