@@ -9,7 +9,7 @@ import { ParticleBackground } from "@/components/particle-background"
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-black text-white selection:bg-white/20">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-black text-white selection:bg-white/20">
       {/* Background Animation */}
       <ParticleBackground />
 
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <img
               src="/cowork-logo-v2.png"
               alt="COWork Logo"
-              className="h-32 w-32 md:h-40 md:w-40 relative z-10 drop-shadow-2xl rounded-[3rem]"
+              className="h-48 w-48 md:h-64 md:w-64 relative z-10 drop-shadow-2xl rounded-[3.5rem]"
             />
           </motion.div>
 
