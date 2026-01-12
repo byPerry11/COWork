@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
+import { NotificationPermissionPrompter } from "@/components/notification-permission-prompter"
 
 export default function RootLayout({
   children,
@@ -41,6 +42,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <NotificationPermissionPrompter />
         </ThemeProvider>
       </body>
     </html>

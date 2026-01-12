@@ -191,8 +191,21 @@ export function ManageMembersDialog({ projectId }: ManageMembersDialogProps) {
     }
 
     const removeMember = async (userId: string) => {
-        // Logic to remove member (omitted for brevity, can be added easily)
-        toast.info("Remove functionality not strictly required for this demo")
+        try {
+            const { error } = await supabase
+                .from('project_members')
+                .delete()
+                .eq('project_id', projectId)
+                .eq('user_id', userId)
+
+            if (error) throw error
+
+            toast.success("Member removed successfully")
+            setMembers(prev => prev.filter(m => m.user_id !== userId))
+        } catch (error) {
+            console.error("Error removing member:", error)
+            toast.error("Failed to remove member")
+        }
     }
 
 
