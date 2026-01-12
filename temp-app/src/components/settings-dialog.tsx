@@ -3,6 +3,9 @@
 import * as React from "react"
 import { Moon, Sun, Monitor, Laptop } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useState } from "react"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
+import { Switch } from "@/components/ui/switch"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -72,8 +75,48 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               </div>
             </RadioGroup>
           </div>
+
+          {/* Notifications Section */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                  <h4 className="font-medium leading-none">Notifications</h4>
+                  <p className="text-sm text-muted-foreground">
+                      Enable push notifications for updates
+                  </p>
+              </div>
+              <NotificationToggle />
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   )
+}
+
+function NotificationToggle() {
+    const { isSubscribed, subscribe, unsubscribe, isSupported, loading } = usePushNotifications()
+    const [toggling, setToggling] = useState(false)
+
+    const handleToggle = async (checked: boolean) => {
+        setToggling(true)
+        if (checked) {
+            await subscribe()
+        } else {
+            await unsubscribe()
+        }
+        setToggling(false)
+    }
+
+    if (!isSupported) return <div className="text-xs text-muted-foreground">Not supported</div>
+
+    return (
+        <div className="flex items-center gap-2">
+           <Switch 
+                checked={isSubscribed}
+                onCheckedChange={handleToggle}
+                disabled={loading || toggling}
+           />
+        </div>
+    )
 }
