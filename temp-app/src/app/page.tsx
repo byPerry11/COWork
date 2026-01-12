@@ -16,7 +16,7 @@ export default function LandingPage() {
       {/* Navigation / Header */}
       <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-6 md:px-12">
         <div className="flex items-center gap-3">
-          <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-white/10 shadow-lg">
+          <div className="relative h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-xl border border-white/10 shadow-lg">
             <img
               src="/cowork-logo-dark.jpg"
               alt="COWork"
@@ -27,13 +27,13 @@ export default function LandingPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/login">
+          <Link href="/login" className="hidden sm:block">
             <Button variant="ghost" className="text-white hover:text-white/80 hover:bg-white/10">
               Log In
             </Button>
           </Link>
           <Link href="/login?tab=signup">
-            <Button className="bg-white text-black hover:bg-white/90 font-medium px-6 rounded-full">
+            <Button className="bg-white text-black hover:bg-white/90 font-medium px-4 md:px-6 rounded-full text-sm md:text-base h-9 md:h-10">
               Sign Up
             </Button>
           </Link>
@@ -59,11 +59,11 @@ export default function LandingPage() {
             <img
               src="/cowork-logo-dark.jpg"
               alt="COWork Logo"
-              className="h-40 w-40 relative z-10 drop-shadow-2xl rounded-3xl border border-white/10 shadow-2xl shadow-white/5"
+              className="h-32 w-32 md:h-40 md:w-40 relative z-10 drop-shadow-2xl rounded-3xl border border-white/10 shadow-2xl shadow-white/5"
             />
           </motion.div>
 
-          <h1 className="mb-6 text-5xl font-extrabold tracking-tight md:text-7xl lg:text-8xl">
+          <h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl md:text-7xl lg:text-8xl">
             <span className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
               Collaborate
             </span>
@@ -73,7 +73,7 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          <p className="mb-10 max-w-2xl text-lg text-gray-400 md:text-xl leading-relaxed">
+          <p className="mb-10 max-w-2xl text-base text-gray-400 md:text-xl leading-relaxed">
             The ultimate workspace management platform designed for modern teams.
             Streamline projects, manage members, and boost productivity with an elegant, dark-mode first experience.
           </p>
@@ -85,13 +85,13 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4"
           >
             <Link href="/login?tab=signup">
-              <Button size="lg" className="bg-white text-black hover:bg-gray-200 text-lg h-12 px-8 rounded-full group">
+              <Button size="lg" className="bg-white text-black hover:bg-gray-200 text-lg h-12 px-8 rounded-full group w-full sm:w-auto">
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link href="#features">
-              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 text-lg h-12 px-8 rounded-full backdrop-blur-sm">
+            <Link href="/about">
+              <Button size="lg" variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 text-lg h-12 px-8 rounded-full backdrop-blur-sm w-full sm:w-auto">
                 Learn More
               </Button>
             </Link>
@@ -162,7 +162,7 @@ export default function LandingPage() {
             <div>
               <h4 className="mb-4 font-semibold text-white">Company</h4>
               <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
+                <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
