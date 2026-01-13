@@ -22,11 +22,11 @@ export function GenericLoading({ className, size = 128 }: GenericLoadingProps) {
     }
 
     // Logic requested by user:
-    // onlycow-black.png -> Dark Mode
-    // onlycow-white.png -> Light Mode
+    // onlycow-white.png -> Dark Mode
+    // onlycow-black.png -> Light Mode
     const logoSrc = resolvedTheme === "dark"
-        ? "/onlycow-black.png"
-        : "/onlycow-white.png"
+        ? "/onlycow-white.png"
+        : "/onlycow-black.png"
 
     return (
         <div className={`flex flex-col items-center justify-center ${className || "h-screen w-full bg-background"}`}>
