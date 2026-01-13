@@ -451,6 +451,7 @@ function ProjectDetailContent() {
                     projectId={project.id}
                     userRole={userRole}
                     members={members}
+                    onRefresh={fetchCheckpoints}
                   />
                 )}
               </div>

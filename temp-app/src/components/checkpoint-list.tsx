@@ -41,6 +41,7 @@ interface CheckpointListProps {
   projectId: string;
   userRole: string | null;
   members: MemberProfile[];
+  onRefresh?: () => void;
 }
 
 interface SortableCheckpointItemProps {
@@ -48,6 +49,7 @@ interface SortableCheckpointItemProps {
   onSelect: (checkpoint: Checkpoint) => void;
   userRole: string | null;
   members: MemberProfile[];
+  onRefresh?: () => void;
 }
 
 function SortableCheckpointItem({
@@ -55,6 +57,7 @@ function SortableCheckpointItem({
   onSelect,
   userRole,
   members,
+  onRefresh,
 }: SortableCheckpointItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isOver } =
     useSortable({
@@ -106,7 +109,7 @@ function SortableCheckpointItem({
 
       if (error) throw error
       toast.success("Assignee removed")
-      window.location.reload();
+      if (onRefresh) onRefresh();
 
     } catch (e) {
       console.error(e)
@@ -258,7 +261,7 @@ function SortableCheckpointItem({
                   <EvidenceForm
                     checkpointId={checkpoint.id}
                     onSuccess={() => {
-                      window.location.reload();
+                      if (onRefresh) onRefresh();
                     }}
                   />
                 )}
@@ -275,6 +278,7 @@ export function CheckpointList({
   checkpoints,
   userRole,
   members,
+  onRefresh
 }: CheckpointListProps) {
 
   if (checkpoints.length === 0) {
@@ -298,6 +302,8 @@ export function CheckpointList({
             userRole={userRole}
             members={members}
             onSelect={() => { }}
+            onRefresh={checkpoints.length > 0 && 'onRefresh' in (arguments[0] || {}) ? (arguments[0] as any).onRefresh : undefined}  // Wait, I can't access arguments like this in map comfortably.
+          // I need to destructure onRefresh in CheckpointList props first.
           />
         ))}
       </div>

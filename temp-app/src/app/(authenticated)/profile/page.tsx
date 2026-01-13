@@ -20,6 +20,7 @@ import { AvatarUpload } from "@/components/avatar-upload"
 import { AchievementsDisplay } from "@/components/achievements-display"
 import { FriendManager } from "@/components/friend-manager"
 import { SettingsDialog } from "@/components/settings-dialog"
+import { ToolsMenu } from "@/components/tools-menu"
 import { Settings as SettingsIcon } from "lucide-react"
 
 export default function ProfilePage() {
@@ -255,6 +256,7 @@ export default function ProfilePage() {
 
                             {/* Edit & Logout Buttons - At Bottom */}
                             <div className="flex gap-2 mt-6 pt-6 border-t justify-center md:justify-end">
+                                <ToolsMenu userId={userId} />
                                 <Button
                                     variant="outline"
                                     size="sm"
