@@ -9,6 +9,9 @@ import { Switch } from "@/components/ui/switch"
 import { PushDeviceList } from "@/components/push-device-list"
 
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
+import { LogOut } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -81,17 +84,22 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                  <h4 className="font-medium leading-none">Notifications</h4>
-                  <p className="text-sm text-muted-foreground">
-                      Enable push notifications for updates
-                  </p>
+                <h4 className="font-medium leading-none">Notifications</h4>
+                <p className="text-sm text-muted-foreground">
+                  Enable push notifications for updates
+                </p>
               </div>
               <NotificationToggle />
             </div>
-            
+
+
             <div className="pt-2">
-                <h5 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Active Devices</h5>
-                <PushDeviceList />
+              <h5 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Active Devices</h5>
+              <PushDeviceList />
+            </div>
+
+            <div className="pt-4 mt-2 border-t">
+              <LogoutButton />
             </div>
           </div>
         </div>
@@ -100,29 +108,49 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   )
 }
 
+function LogoutButton() {
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  return (
+    <Button
+      variant="destructive"
+      className="w-full flex items-center justify-center gap-2"
+      onClick={handleLogout}
+    >
+      <LogOut className="h-4 w-4" />
+      Sign Out
+    </Button>
+  )
+}
+
 function NotificationToggle() {
-    const { isSubscribed, subscribe, unsubscribe, isSupported, loading } = usePushNotifications()
-    const [toggling, setToggling] = useState(false)
+  const { isSubscribed, subscribe, unsubscribe, isSupported, loading } = usePushNotifications()
+  const [toggling, setToggling] = useState(false)
 
-    const handleToggle = async (checked: boolean) => {
-        setToggling(true)
-        if (checked) {
-            await subscribe()
-        } else {
-            await unsubscribe()
-        }
-        setToggling(false)
+  const handleToggle = async (checked: boolean) => {
+    setToggling(true)
+    if (checked) {
+      await subscribe()
+    } else {
+      await unsubscribe()
     }
+    setToggling(false)
+  }
 
-    if (!isSupported) return <div className="text-xs text-muted-foreground">Not supported</div>
+  if (!isSupported) return <div className="text-xs text-muted-foreground">Not supported</div>
 
-    return (
-        <div className="flex items-center gap-2">
-           <Switch 
-                checked={isSubscribed}
-                onCheckedChange={handleToggle}
-                disabled={loading || toggling}
-           />
-        </div>
-    )
+  return (
+    <div className="flex items-center gap-2">
+      <Switch
+        checked={isSubscribed}
+        onCheckedChange={handleToggle}
+        disabled={loading || toggling}
+      />
+    </div>
+  )
 }

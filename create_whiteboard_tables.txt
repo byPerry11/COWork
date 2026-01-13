@@ -1,0 +1,39 @@
+-- create_whiteboard_tables.sql
+
+-- 1. Create table for Whiteboards (Sessions)
+CREATE TABLE IF NOT EXISTS whiteboards (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    owner_id UUID REFERENCES auth.users(id),
+    title TEXT DEFAULT 'Untitled Whiteboard',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 2. Create table for Strokes (Drawing Data)
+CREATE TABLE IF NOT EXISTS whiteboard_strokes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    whiteboard_id UUID REFERENCES whiteboards(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id),
+    color TEXT NOT NULL,
+    points JSONB NOT NULL, -- Array of {x, y} coordinates
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 3. Enable RLS
+ALTER TABLE whiteboards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whiteboard_strokes ENABLE ROW LEVEL SECURITY;
+
+-- 4. Policies (Open for collaboration for now)
+-- Adjust later to restrict to project members if needed
+
+-- Whiteboards: authenticated users can create, view, update
+CREATE POLICY "Users can create whiteboards" ON whiteboards FOR INSERT TO authenticated WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Users can view whiteboards" ON whiteboards FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Users can update whiteboards" ON whiteboards FOR UPDATE TO authenticated USING (true);
+
+-- Strokes: authenticated users can insert and view
+CREATE POLICY "Users can add strokes" ON whiteboard_strokes FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Users can view strokes" ON whiteboard_strokes FOR SELECT TO authenticated USING (true);
+
+-- 5. Enable Realtime for Strokes
+-- This is crucial for the "Live" persistence updates (listening to INSERTs)
+ALTER PUBLICATION supabase_realtime ADD TABLE whiteboard_strokes;

@@ -265,89 +265,82 @@ export default function ProfilePage() {
                                     <Edit className="h-4 w-4 mr-2" />
                                     Edit Profile
                                 </Button>
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={handleLogout}
-                                >
-                                    <LogOut className="h-4 w-4 mr-2" />
-                                    Logout
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Edit Profile Form (Collapsible) */}
-                    {isEditMode && (
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle>Edit Profile</CardTitle>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            setIsEditMode(false)
-                                            if (userId) fetchProfile(userId)
-                                        }}
-                                    >
-                                        Close
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {/* Avatar Upload Section */}
-                                <div className="flex flex-col items-center gap-4 pb-6 border-b">
-                                    <h3 className="text-sm font-medium">Profile Picture</h3>
-                                    <AvatarUpload userId={userId} />
-                                </div>
-
-                                {/* Profile Edit Form */}
-                                <ProfileEditForm userId={userId} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Tabs for Content */}
-                    <Tabs defaultValue="achievements" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 lg:w-auto">
-                            <TabsTrigger value="achievements" className="flex items-center gap-2">
-                                <Award className="h-4 w-4" />
-                                <span className="hidden sm:inline">Achievements</span>
-                                <span className="sm:hidden">Awards</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="friends" className="flex items-center gap-2">
-                                <Users className="h-4 w-4" />
-                                Friends
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="achievements" className="mt-6">
-                            <Suspense
-                                fallback={
-                                    <div className="flex justify-center p-8">
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                    </div>
-                                }
-                            >
-                                <AchievementsDisplay userId={userId} />
-                            </Suspense>
-                        </TabsContent>
-
-                        <TabsContent value="friends" className="mt-6">
-                            <Suspense
-                                fallback={
-                                    <div className="flex justify-center p-8">
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                    </div>
-                                }
-                            >
-                                <FriendManager userId={userId} />
-                            </Suspense>
-                        </TabsContent>
-                    </Tabs>
-                </div>
+                            </Button>
+                        </div>
+                    </CardContent>
             </Card>
+
+            {/* Edit Profile Form (Collapsible) */}
+            {isEditMode && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>Edit Profile</CardTitle>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setIsEditMode(false)
+                                    if (userId) fetchProfile(userId)
+                                }}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {/* Avatar Upload Section */}
+                        <div className="flex flex-col items-center gap-4 pb-6 border-b">
+                            <h3 className="text-sm font-medium">Profile Picture</h3>
+                            <AvatarUpload userId={userId} />
+                        </div>
+
+                        {/* Profile Edit Form */}
+                        <ProfileEditForm userId={userId} />
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Tabs for Content */}
+            <Tabs defaultValue="achievements" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 lg:w-auto">
+                    <TabsTrigger value="achievements" className="flex items-center gap-2">
+                        <Award className="h-4 w-4" />
+                        <span className="hidden sm:inline">Achievements</span>
+                        <span className="sm:hidden">Awards</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="friends" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Friends
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="achievements" className="mt-6">
+                    <Suspense
+                        fallback={
+                            <div className="flex justify-center p-8">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        }
+                    >
+                        <AchievementsDisplay userId={userId} />
+                    </Suspense>
+                </TabsContent>
+
+                <TabsContent value="friends" className="mt-6">
+                    <Suspense
+                        fallback={
+                            <div className="flex justify-center p-8">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        }
+                    >
+                        <FriendManager userId={userId} />
+                    </Suspense>
+                </TabsContent>
+            </Tabs>
         </div>
+            </Card >
+        </div >
     )
 }

@@ -1,0 +1,25 @@
+-- fix_team_visibility.sql
+-- Ejecuta este script en el SQL Editor de Supabase para corregir la visibilidad de los miembros del equipo
+
+-- 1. Habilitar lectura de perfiles para todos los usuarios autenticados
+-- Esto es necesario para ver nombres y avatares de otros miembros del equipo
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
+DROP POLICY IF EXISTS "Profiles are viewable by users who are logged in" ON profiles;
+
+CREATE POLICY "Profiles are viewable by users who are logged in"
+ON profiles FOR SELECT
+TO authenticated
+USING (true);
+
+-- 2. Asegurar que los miembros del proyecto sean visibles
+-- Una política simplificada para evitar recursión y asegurar visibilidad
+DROP POLICY IF EXISTS "See project members" ON project_members;
+DROP POLICY IF EXISTS "Project members are viewable by project members" ON project_members;
+
+CREATE POLICY "See project members"
+ON project_members FOR SELECT
+TO authenticated
+USING (
+  true -- Por el momento permitimos ver la membresía a todos los autenticados para desatascar la UI.
+       -- Si se requiere privacidad estricta, se puede refinar luego, pero esto soluciona el bloqueo inmediato.
+);

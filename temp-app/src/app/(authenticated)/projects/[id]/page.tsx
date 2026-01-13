@@ -119,6 +119,7 @@ function ProjectDetailContent() {
         if (membersError) {
           console.error("Error fetching members:", membersError)
         } else {
+          console.log("Fetched members raw data:", membersData)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setMembers(membersData || [])
         }
@@ -141,6 +142,10 @@ function ProjectDetailContent() {
       fetchCheckpoints()
     }
   }, [id, refreshKey])
+
+  useEffect(() => {
+    console.log("Members state changed:", members)
+  }, [members])
 
   const fetchCheckpoints = async () => {
     setLoadingCheckpoints(true)
