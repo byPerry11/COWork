@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, User, Bell, FolderKanban, MessageCircle } from "lucide-react"
+import { Home, User, Bell, FolderKanban, MessageCircle, Wrench } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
@@ -27,6 +27,8 @@ export function FloatingNav() {
     { href: "/dashboard", icon: Home, label: "Home" },
     { href: "/dashboard/projects", icon: FolderKanban, label: "Projects" },
     { href: "/chats", icon: MessageCircle, label: "Chats" },
+    { href: "/chats", icon: MessageCircle, label: "Chats" },
+    { href: "/tools", icon: Wrench, label: "Tools" },
     { href: "/profile", icon: User, label: "Profile", isProfile: true },
   ]
 
