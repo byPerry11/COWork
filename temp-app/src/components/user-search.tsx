@@ -68,14 +68,15 @@ export function UserSearch({ onRequestSent }: UserSearchProps) {
 
             // Check status for these users
             if (data && data.length > 0 && userId) {
+                const profiles = data as Profile[]
                 const { data: statusData } = await supabase
                     .from('friend_requests')
                     .select('receiver_id, status')
                     .eq('sender_id', userId)
-                    .in('receiver_id', data.map((u: any) => u.id))
+                    .in('receiver_id', profiles.map(u => u.id))
 
                 const statusMap: Record<string, string> = {}
-                statusData?.forEach((r: any) => {
+                statusData?.forEach((r: { receiver_id: string; status: string }) => {
                     statusMap[r.receiver_id] = r.status
                 })
 
@@ -110,7 +111,7 @@ export function UserSearch({ onRequestSent }: UserSearchProps) {
                 .select('username')
                 .eq('id', userId)
                 .single()
-            
+
             const senderName = profile?.username || 'Someone'
 
             await supabase.from('notifications').insert({

@@ -51,7 +51,7 @@ export interface Checkpoint {
   title: string
   is_completed: boolean
   completed_by?: string | null
-  // assigned_to?: string | null // Deprecated in favor of assignments
+
   assignments?: {
     user_id: string
     profile: Profile
