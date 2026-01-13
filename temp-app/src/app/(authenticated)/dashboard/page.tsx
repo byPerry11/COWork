@@ -92,11 +92,15 @@ export default function DashboardPage() {
             progress = total > 0 ? (completed / total) * 100 : 0
 
             // Count members and get avatars
-            const { data: activeMembers, count } = await supabase
+            const { data: activeMembers, count, error: countError } = await supabase
               .from("project_members")
-              .select("profiles(avatar_url)", { count: "exact" })
+              .select("user_id, profiles(avatar_url)", { count: "exact" })
               .eq("project_id", project.id)
               .eq("status", "active")
+
+            if (countError) {
+              console.error("Error counting members for project", project.id, countError)
+            }
 
             memberCount = count || 0
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

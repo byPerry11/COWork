@@ -27,7 +27,6 @@ export function FloatingNav() {
     { href: "/dashboard", icon: Home, label: "Home" },
     { href: "/dashboard/projects", icon: FolderKanban, label: "Projects" },
     { href: "/chats", icon: MessageCircle, label: "Chats" },
-    { href: "/chats", icon: MessageCircle, label: "Chats" },
     { href: "/tools", icon: Wrench, label: "Tools" },
     { href: "/profile", icon: User, label: "Profile", isProfile: true },
   ]
