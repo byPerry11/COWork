@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import Link from "next/link"
 import { ENGINEERING_CATEGORIES } from "@/lib/project-constants"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarStack } from "@/components/avatar-stack"
 
 interface ProjectCardProps {
     id: string
@@ -142,19 +142,12 @@ export function ProjectCard({
                         <div className="flex items-center">
                             {/* Stacked Avatars */}
                             <div className="flex -space-x-2 mr-2">
-                                {members.slice(0, 3).map((m, i) => (
-                                    <Avatar key={i} className="h-6 w-6 border-2 border-background ring-1 ring-border">
-                                        <AvatarImage src={m.avatar_url || ""} />
-                                        <AvatarFallback className="text-[8px] bg-muted text-muted-foreground font-bold">
-                                            U
-                                        </AvatarFallback>
-                                    </Avatar>
-                                ))}
-                                {memberCount > 3 && (
-                                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[9px] font-medium text-muted-foreground ring-1 ring-border z-10">
-                                        +{memberCount - 3}
-                                    </div>
-                                )}
+                                <AvatarStack
+                                    members={members}
+                                    max={3}
+                                    className="mr-2"
+                                    borderColor="border-background"
+                                />
                             </div>
                             <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
                         </div>

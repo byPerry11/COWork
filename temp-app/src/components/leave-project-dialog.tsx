@@ -48,7 +48,7 @@ export function LeaveProjectDialog({ projectId, projectTitle }: LeaveProjectDial
 
             // Here you would add the notification logic to admins
             // For now we'll just log it
-            console.log(`User ${session.user.id} left project ${projectId}`)
+
 
         } catch (error: any) {
             toast.error("Failed to leave project")

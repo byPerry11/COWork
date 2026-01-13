@@ -9,6 +9,7 @@ import { CheckpointTasksList } from "@/components/checkpoint-tasks-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
+import { AvatarStack } from "@/components/avatar-stack";
 import {
   Dialog,
   DialogContent,
@@ -90,8 +91,6 @@ function SortableCheckpointItem({
   const [showAssignees, setShowAssignees] = useState(false);
 
   const assignments = checkpoint.assignments || [];
-  const displayAssignments = assignments.slice(0, 3);
-  const remaining = assignments.length - 3;
 
   // Allow admins and owners to remove assignees. 
   // We don't have perfect role check here without passing full context, 
@@ -172,23 +171,17 @@ function SortableCheckpointItem({
                 <Dialog open={showAssignees} onOpenChange={setShowAssignees}>
                   <DialogTrigger asChild>
                     <div
-                      className="flex -space-x-2 hover:opacity-80 transition-opacity cursor-pointer p-1 rounded-md hover:bg-muted/50 items-center"
+                      className="transition-opacity cursor-pointer p-1 rounded-md hover:bg-muted/50 items-center inline-flex"
                       onClick={(e) => { e.stopPropagation(); }}
                       title="Click to manage assignees"
                     >
-                      {displayAssignments.map((a) => (
-                        <Avatar key={a.user_id} className="h-6 w-6 border-2 border-background ring-1 ring-border">
-                          <AvatarImage src={a.profile?.avatar_url || ""} />
-                          <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
-                            {a.profile?.username?.slice(0, 2).toUpperCase() || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {remaining > 0 && (
-                        <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[9px] font-medium text-muted-foreground ring-1 ring-border z-10">
-                          +{remaining}
-                        </div>
-                      )}
+                      <AvatarStack
+                        members={assignments.map(a => ({
+                          avatar_url: a.profile?.avatar_url || null,
+                          username: a.profile?.username || undefined
+                        }))}
+                        max={3}
+                      />
                     </div>
                   </DialogTrigger>
                   <DialogContent>
