@@ -164,7 +164,7 @@ function ProjectDetailContent() {
 
       if (error) throw error
 
-      console.log("Checkpoints Data Raw:", data)
+
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedData = (data as any[])?.map(item => ({

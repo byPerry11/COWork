@@ -23,20 +23,30 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+interface MemberProfile {
+  user_id: string;
+  role: string;
+  status: string;
+  member_color?: string;
+  profile: {
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
 interface CheckpointListProps {
   checkpoints: Checkpoint[];
   projectId: string;
   userRole: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  members: any[];
+  members: MemberProfile[];
 }
 
 interface SortableCheckpointItemProps {
   checkpoint: Checkpoint;
   onSelect: (checkpoint: Checkpoint) => void;
   userRole: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  members: any[];
+  members: MemberProfile[];
 }
 
 function SortableCheckpointItem({
@@ -64,7 +74,7 @@ function SortableCheckpointItem({
 
   if (checkpoint.is_completed && checkpoint.completed_by) {
     const completer = members.find(
-      (m: any) => m.user_id === checkpoint.completed_by,
+      (m) => m.user_id === checkpoint.completed_by,
     );
     if (completer && completer.member_color) {
       const color =

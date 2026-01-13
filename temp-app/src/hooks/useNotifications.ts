@@ -70,7 +70,7 @@ export function useNotifications() {
                 .limit(20)
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setFriendRequests(frData as any || [])
+            setFriendRequests((frData as any) || [])
 
             // 2. Project Invites
             const { data: piData, error: piError } = await supabase
@@ -91,10 +91,7 @@ export function useNotifications() {
 
             if (piError) console.error("Error fetching invites", piError)
 
-            // Do NOT filter out invites where project is null (RLS restricted)
-            // We want to show the invitation even if we can't see the details yet
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const validInvites = (piData as any || [])
+            const validInvites = (piData as unknown as ProjectInvitation[]) || []
             setProjectInvites(validInvites)
 
             // 3. Rejected Checkpoints (Keep as is for now, usually these are "pending" resolution)
@@ -121,8 +118,7 @@ export function useNotifications() {
                     .in('project_id', projectIds)
 
                 // Do NOT filter out checkpoints where project is null
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const validCheckpoints = (rcData as any || [])
+                const validCheckpoints = (rcData as unknown as RejectedCheckpoint[] || [])
                 setRejectedCheckpoints(validCheckpoints)
             } else {
                 setRejectedCheckpoints([])
@@ -136,12 +132,14 @@ export function useNotifications() {
                 .order('created_at', { ascending: false })
                 .limit(20)
 
-            setSystemNotifications(sysData || [])
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sysDataTyped = sysData as SystemNotification[] || []
+            setSystemNotifications(sysDataTyped)
 
-            // Update counts (Only count PENDING as unread + unread system notifications)
-            const pendingFR = frData?.filter((fr: any) => fr.status === 'pending').length || 0
-            const pendingPI = validInvites.filter((pi: any) => pi.status === 'pending').length
-            const unreadSys = (sysData || []).filter((n: any) => !n.is_read).length
+            // Update counts
+            const pendingFR = frData?.filter((fr: { status: string }) => fr.status === 'pending').length || 0
+            const pendingPI = validInvites.filter((pi) => pi.status === 'pending').length
+            const unreadSys = sysDataTyped.filter((n) => !n.is_read).length
             const total = pendingFR + pendingPI + rejectedCheckpoints.length + unreadSys
             setUnreadCount(total)
 

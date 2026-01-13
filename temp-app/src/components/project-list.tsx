@@ -2,16 +2,36 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Progress } from "@/components/ui/progress"
 import { Project, Role } from "@/types"
 import { ProjectCard } from "@/components/project-card"
-import { CalendarDays, Users } from "lucide-react"
 
 interface ProjectListProps {
   userId: string
+}
+
+// DB Response Type
+interface ProjectDBResponse {
+  role: Role
+  projects: {
+    id: string
+    title: string
+    description: string | null
+    category: string | null
+    color: string | null
+    project_icon: string | null
+    status: 'active' | 'completed' | 'archived'
+    start_date: string
+    owner_id: string
+    end_date: string | null
+    created_at: string
+    max_users: number
+    checkpoints: { is_completed: boolean }[]
+    project_members: {
+      user_id: string
+      profiles: { avatar_url: string | null } | null
+    }[]
+  }
 }
 
 interface ProjectWithRole extends Project {
@@ -35,7 +55,7 @@ export function ProjectList({ userId }: ProjectListProps) {
             role,
             projects:project_id (
               id,
-              id,
+              owner_id,
               title,
               description,
               category,
@@ -43,7 +63,9 @@ export function ProjectList({ userId }: ProjectListProps) {
               project_icon,
               status,
               start_date,
+              end_date,
               max_users,
+              created_at,
               checkpoints (
                 is_completed
               ),
@@ -63,17 +85,16 @@ export function ProjectList({ userId }: ProjectListProps) {
         }
 
         // Transform data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mappedProjects = data?.map((item: any) => {
+        const dbData = data as unknown as ProjectDBResponse[]
+        const mappedProjects = dbData?.map((item) => {
           const checkpoints = item.projects.checkpoints || []
           const total = checkpoints.length
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const completed = checkpoints.filter((c: any) => c.is_completed).length
+          const completed = checkpoints.filter((c) => c.is_completed).length
           const progress = total > 0 ? (completed / total) * 100 : 0
 
           // Map members for UI
-          const members = item.projects.project_members?.map((pm: any) => ({
-             avatar_url: pm.profiles?.avatar_url
+          const members = item.projects.project_members?.map((pm) => ({
+            avatar_url: pm.profiles?.avatar_url || null
           })) || []
 
           return {
@@ -130,25 +151,21 @@ export function ProjectList({ userId }: ProjectListProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-
       {projects.map((project) => (
         <div key={project.id} className="h-full">
-            <ProjectCard
-                id={project.id}
-                title={project.title}
-                description={project.title} // Description was missing in select? No, it wasn't fetched! I need to check fetch.
-                // Wait, ProjectList fetching didn't select description or other fields needed by ProjectCard?
-                // Fetching query: select(id, title, status, start_date, max_users...)
-                // ProjectCard needs: description, category, color, project_icon
-                // I need to update the query in ProjectList as well if I want to use ProjectCard fully.
-                // For now, I will use what I have and Defaults, or update query. 
-                // Let's update query in next step.
-                status={project.status}
-                role={project.user_role}
-                progress={project.progress}
-                memberCount={project.members.length} // Approximate or fetched count? fetch didn't get count, just members.
-                members={project.members}
-            />
+          <ProjectCard
+            id={project.id}
+            title={project.title}
+            description={project.description}
+            category={project.category}
+            color={project.color}
+            project_icon={project.project_icon}
+            status={project.status}
+            role={project.user_role}
+            progress={project.progress}
+            memberCount={project.members.length}
+            members={project.members}
+          />
         </div>
       ))}
     </div>
