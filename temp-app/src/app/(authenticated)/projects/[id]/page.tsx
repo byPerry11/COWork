@@ -161,12 +161,33 @@ function ProjectDetailContent() {
     try {
       const { data, error } = await supabase
         .from("checkpoints")
-        .select("*")
+        .select(`
+            *,
+            assignments:checkpoint_assignments(
+                user_id,
+                profile:profiles(
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                )
+            )
+        `)
         .eq("project_id", id)
         .order("order", { ascending: true });
 
       if (error) throw error
-      setCheckpoints(data || []);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formattedData = (data as any[])?.map(item => ({
+        ...item,
+        assignments: item.assignments?.map((a: any) => ({
+          user_id: a.user_id,
+          profile: a.profile
+        })) || []
+      }))
+
+      setCheckpoints(formattedData || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -250,17 +271,27 @@ function ProjectDetailContent() {
     if (active.data.current?.type === 'member' && over.data.current?.type === 'checkpoint') {
       const memberId = active.data.current.memberId
       const checkpointId = over.data.current.checkpointId
+      const memberProfile = active.data.current.memberProfile
+
+      // Check if already assigned
+      const targetCheckpoint = checkpoints.find(c => c.id === checkpointId)
+      if (targetCheckpoint?.assignments?.some(a => a.user_id === memberId)) {
+        toast.info("User already assigned")
+        return
+      }
 
       // Optimistic Update
       setCheckpoints(prev => prev.map(c =>
-        c.id === checkpointId ? { ...c, assigned_to: memberId } : c
+        c.id === checkpointId ? {
+          ...c,
+          assignments: [...(c.assignments || []), { user_id: memberId, profile: memberProfile }]
+        } : c
       ))
 
       try {
         const { error } = await supabase
-          .from('checkpoints')
-          .update({ assigned_to: memberId })
-          .eq('id', checkpointId)
+          .from('checkpoint_assignments')
+          .insert({ checkpoint_id: checkpointId, user_id: memberId })
 
         if (error) throw error
         toast.success("Member assigned to checkpoint!")
@@ -312,7 +343,7 @@ function ProjectDetailContent() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-background">
 
         <div className="flex flex-1 flex-col">
           <header className="sticky top-0 z-10 border-b bg-white px-4 md:px-6 py-4 dark:bg-gray-950 flex flex-wrap items-center justify-between gap-4">

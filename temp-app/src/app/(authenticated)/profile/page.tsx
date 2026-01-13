@@ -137,7 +137,7 @@ export default function ProfilePage() {
     if (!profile || !userId) return null
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8">
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-background p-4 md:p-8">
             <Card className="w-full max-w-4xl shadow-xl border-t-4 border-t-primary">
                 <div className="container mx-auto max-w-5xl p-4 md:p-6 space-y-6 pb-24 md:pb-6">
                     {/* Instagram-style Header */}
@@ -168,7 +168,7 @@ export default function ProfilePage() {
                                         {/* Discord-style Status Indicator */}
                                         <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2">
                                             <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full ring-4 ring-card ${userStatus === 'online' ? 'bg-green-500' :
-                                                    userStatus === 'away' ? 'bg-yellow-500' : 'bg-red-500'
+                                                userStatus === 'away' ? 'bg-yellow-500' : 'bg-red-500'
                                                 }`} />
                                         </div>
                                     </div>

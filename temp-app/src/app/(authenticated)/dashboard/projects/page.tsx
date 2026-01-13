@@ -111,7 +111,7 @@ export default function ProjectsPage() {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+        <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-background">
             {/* Main Content Area */}
             <main className="flex-1 overflow-y-auto">
                 <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8 pb-24 md:pb-6">

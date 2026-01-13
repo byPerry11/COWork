@@ -97,11 +97,11 @@ export default function DashboardPage() {
               .select("profiles(avatar_url)", { count: "exact" })
               .eq("project_id", project.id)
               .eq("status", "active")
-            
+
             memberCount = count || 0
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const members = activeMembers?.map((m: any) => ({ avatar_url: m.profiles?.avatar_url })) || []
-            
+
             // @ts-ignore
             project.members = members
           }
@@ -184,7 +184,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-background">
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">

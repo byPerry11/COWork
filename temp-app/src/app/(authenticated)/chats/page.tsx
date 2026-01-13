@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function ChatsPage() {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-background p-4">
             <Card className="w-full max-w-2xl">
                 <CardHeader className="text-center">
                     <div className="flex justify-center mb-4">
