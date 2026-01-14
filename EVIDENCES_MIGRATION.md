@@ -23,6 +23,21 @@ CREATE INDEX IF NOT EXISTS idx_evidences_checkpoint_id ON evidences(checkpoint_i
 CREATE INDEX IF NOT EXISTS idx_evidences_user_id ON evidences(user_id);
 ```
 
+## PASO 1.5: CREAR FOREIGN KEY A PROFILES (¡CRÍTICO!)
+
+**Sin esta foreign key, el error PGRST200 ocurrirá al intentar hacer join con profiles.**
+
+```sql
+-- Eliminar FK existente si hay conflicto
+ALTER TABLE evidences 
+DROP CONSTRAINT IF EXISTS evidences_user_id_profiles_fkey;
+
+-- Crear la foreign key a profiles para permitir el join implícito
+ALTER TABLE evidences
+ADD CONSTRAINT evidences_user_id_profiles_fkey
+FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+```
+
 ## PASO 2: Habilitar RLS
 
 ```sql

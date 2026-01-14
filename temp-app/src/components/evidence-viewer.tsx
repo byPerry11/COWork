@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Maximize2 } from "lucide-react"
@@ -111,6 +112,7 @@ export function EvidenceViewer({ checkpointId, userRole, onSuccess }: EvidenceVi
                         </Card>
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl w-full p-2">
+                        <DialogTitle className="sr-only">Evidence Image Fullscreen</DialogTitle>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={evidence.image_url}

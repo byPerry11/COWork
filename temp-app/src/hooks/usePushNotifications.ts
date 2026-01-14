@@ -93,7 +93,24 @@ export function usePushNotifications() {
 
       // Get VAPID public key from environment or API
       const response = await fetch('/api/push/vapid-key')
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        toast.error('Push notifications are not configured', {
+          description: 'Please contact the administrator to enable this feature'
+        })
+        console.error('VAPID key error:', errorData)
+        return false
+      }
+
       const { publicKey } = await response.json()
+
+      if (!publicKey) {
+        toast.error('Push notifications are not configured', {
+          description: 'VAPID public key is missing'
+        })
+        return false
+      }
 
       // Subscribe to push manager
       const subscription = await registration.pushManager.subscribe({
@@ -129,7 +146,9 @@ export function usePushNotifications() {
 
     } catch (error) {
       console.error('Error subscribing to push:', error)
-      toast.error('Failed to enable push notifications')
+      toast.error('Failed to enable push notifications', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      })
       return false
     } finally {
       setLoading(false)
