@@ -54,7 +54,9 @@ export function EvidenceViewer({ checkpointId, userRole, onSuccess }: EvidenceVi
                     )
                 `)
                     .eq('checkpoint_id', checkpointId)
-                    .single()
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
 
                 if (error) {
                     // If no single record found (or RLS issue), handle gracefully
@@ -222,7 +224,9 @@ function ReviewSection({
                     .from('evidences')
                     .select('id, user_id')
                     .eq('checkpoint_id', checkpointId)
-                    .single()
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
 
                 // 2. Insert correction record
                 const { data: { user } } = await supabase.auth.getUser()

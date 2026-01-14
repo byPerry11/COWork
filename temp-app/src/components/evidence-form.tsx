@@ -42,6 +42,7 @@ interface EvidenceFormProps {
 
 export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [projectName, setProjectName] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [showUnsavedAlert, setShowUnsavedAlert] = useState(false)
@@ -54,6 +55,24 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
       note: "",
     },
   })
+
+
+  // Fetch Project Name
+  useEffect(() => {
+    async function fetchProject() {
+      const { data } = await supabase
+        .from('checkpoints')
+        .select('project:projects(title)')
+        .eq('id', checkpointId)
+        .single()
+      
+      if (data?.project) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setProjectName((data.project as any).title || "Project")
+      }
+    }
+    fetchProject()
+  }, [checkpointId])
 
   // Watch for changes to warn on exit
   const noteContent = form.watch("note")
@@ -112,7 +131,12 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
 
       if (file) {
         const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random()}.${fileExt}`
+        
+        // Format: Evidencia_NombreProyecto_YYYY-MM-DD_HH-mm-ss
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+        const sanitizedProject = projectName.replace(/[^a-zA-Z0-9]/g, '_')
+        const fileName = `Evidencia_${sanitizedProject}_${timestamp}.${fileExt}`
+        
         const filePath = `${checkpointId}/${fileName}`
 
         const { error: uploadError } = await supabase.storage
