@@ -27,6 +27,7 @@ interface UserProject {
   memberCount: number
   owner_id: string
   membershipStatus?: "active" | "pending" | "rejected"
+  end_date?: string | null
 }
 
 interface UserWorkGroup {
@@ -50,6 +51,28 @@ export default function DashboardPage() {
   // Get random motivational quote (stable per page load)
   const randomQuote = useMemo(() => getRandomQuote(), [])
 
+  // Calculate calendar events from projects
+  const calendarEvents = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events: any[] = []
+    
+    projects.forEach(project => {
+      // 1. Project Deadline
+      if (project.end_date && project.status === 'active') {
+        events.push({
+          id: `deadline-${project.id}`,
+          title: `Deadline: ${project.title}`,
+          date: new Date(project.end_date),
+          color: project.color || '#6366f1',
+          type: 'project-deadline',
+          link: `/dashboard/projects/${project.id}`
+        })
+      }
+    })
+    
+    return events
+  }, [projects])
+
   const fetchProjects = useCallback(async (userId: string) => {
     // Note: We don't set loading(true) here to avoid flickering on refresh
     const { data: projectMembers, error: fetchError } = await supabase
@@ -66,7 +89,8 @@ export default function DashboardPage() {
                 color,
                 project_icon,
                 status,
-                owner_id
+                owner_id,
+                end_date
             )
         `)
       .eq("user_id", userId)
@@ -134,7 +158,8 @@ export default function DashboardPage() {
             role: member.role,
             progress,
             memberCount,
-            membershipStatus: member.status
+            membershipStatus: member.status,
+            end_date: project.end_date
           } as UserProject
         })
     )
@@ -382,7 +407,7 @@ export default function DashboardPage() {
 
             {/* Calendar - Takes 1 column on large screens */}
             <div className="lg:col-span-1">
-              <CalendarWidget />
+              <CalendarWidget events={calendarEvents} />
             </div>
           </div>
         </div>
