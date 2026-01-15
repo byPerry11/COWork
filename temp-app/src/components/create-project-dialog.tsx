@@ -55,7 +55,7 @@ const projectSchema = z.object({
   project_icon: z.string().min(1, "Please select an icon"),
   start_date: z.date(),
   end_date: z.date().optional(),
-  max_users: z.coerce.number().min(1, "At least 1 user required"),
+  max_users: z.number().min(1, "At least 1 user required"),
   is_public: z.boolean().default(false),
 })
 
