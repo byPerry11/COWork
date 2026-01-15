@@ -277,7 +277,8 @@ function ProjectDetailContent() {
       setCheckpoints(prev => prev.map(c =>
         c.id === checkpointId ? {
           ...c,
-          assignments: [...(c.assignments || []), { user_id: memberId, profile: memberProfile }]
+          assignments: [...(c.assignments || []), { user_id: memberId, profile: memberProfile }],
+          is_vacant: false
         } : c
       ))
 
@@ -287,6 +288,15 @@ function ProjectDetailContent() {
           .insert({ checkpoint_id: checkpointId, user_id: memberId })
 
         if (error) throw error
+
+        // Also mark as not vacant in DB
+        const { error: updateError } = await supabase
+          .from('checkpoints')
+          .update({ is_vacant: false })
+          .eq('id', checkpointId)
+
+        if (updateError) console.error("Failed to update vacant status", updateError)
+
         toast.success("Member assigned to checkpoint!")
       } catch (error) {
         console.error("Error assigning member", error)
@@ -455,6 +465,7 @@ function ProjectDetailContent() {
                     checkpoints={checkpoints}
                     projectId={project.id}
                     userRole={userRole}
+                    currentUserId={currentUserId}
                     members={members}
                     onRefresh={fetchCheckpoints}
                   />

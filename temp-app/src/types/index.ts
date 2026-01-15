@@ -16,8 +16,27 @@ export interface Profile {
   updated_at: string
 }
 
+
+export interface WorkGroup {
+  id: string
+  name: string
+  description?: string | null
+  owner_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface WorkGroupMember {
+  work_group_id: string
+  user_id: string
+  role: Role
+  joined_at: string
+  profile?: Profile
+}
+
 export interface Project {
   id: string
+  work_group_id?: string | null // New field
   owner_id: string
   title: string
   description?: string | null
@@ -31,6 +50,7 @@ export interface Project {
   max_users: number
   status: 'active' | 'completed' | 'archived'
   created_at: string
+  work_group?: WorkGroup // For joins
 }
 
 export type Role = 'admin' | 'manager' | 'member'
@@ -49,6 +69,9 @@ export interface Checkpoint {
   id: string
   project_id: string
   title: string
+  description?: string | null // New field
+  image_url?: string | null // New field
+  is_vacant?: boolean // New field
   is_completed: boolean
   completed_by?: string | null
 

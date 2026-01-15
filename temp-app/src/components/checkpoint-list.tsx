@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Checkpoint } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Camera, GripVertical, ChevronDown, User as UserIcon, X as XIcon } from "lucide-react";
+import { CheckCircle2, Circle, Camera, GripVertical, ChevronDown, User as UserIcon, X as XIcon, ImageIcon, AlertCircle, RotateCcw } from "lucide-react";
 import { EvidenceForm } from "@/components/evidence-form";
 import { EvidenceViewer } from "@/components/evidence-viewer";
 import { CheckpointTasksList } from "@/components/checkpoint-tasks-list";
@@ -23,6 +23,7 @@ import {
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Badge } from "@/components/ui/badge";
 
 interface MemberProfile {
   user_id: string;
@@ -40,6 +41,7 @@ interface CheckpointListProps {
   checkpoints: Checkpoint[];
   projectId: string;
   userRole: string | null;
+  currentUserId: string; // Added currentUserId
   members: MemberProfile[];
   onRefresh?: () => void;
 }
@@ -48,6 +50,7 @@ interface SortableCheckpointItemProps {
   checkpoint: Checkpoint;
   onSelect: (checkpoint: Checkpoint) => void;
   userRole: string | null;
+  currentUserId: string;
   members: MemberProfile[];
   onRefresh?: () => void;
 }
@@ -56,6 +59,7 @@ function SortableCheckpointItem({
   checkpoint,
   onSelect,
   userRole,
+  currentUserId,
   members,
   onRefresh,
 }: SortableCheckpointItemProps) {
@@ -92,13 +96,68 @@ function SortableCheckpointItem({
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAssignees, setShowAssignees] = useState(false);
+  const [showImage, setShowImage] = useState(false);
 
   const assignments = checkpoint.assignments || [];
+  const isVacant = checkpoint.is_vacant;
+  const isAdminOrManager = userRole === 'admin' || userRole === 'manager' || userRole === 'owner';
+  const isAssignedToMe = assignments.some(a => a.user_id === currentUserId);
 
-  // Allow admins and owners to remove assignees. 
-  // We don't have perfect role check here without passing full context, 
-  // but we can trust userRole prop for basic UI toggle and RLS for security.
-  const canManageAssignees = userRole === 'admin' || userRole === 'owner';
+  // Allow admins and owners to remove assignees or revert vacant status
+  const canManageAssignees = userRole === 'admin' || userRole === 'owner' || userRole === 'manager';
+
+  const handleClaim = async () => {
+    try {
+      // 1. Insert assignment
+      const { error: assignError } = await supabase
+        .from('checkpoint_assignments')
+        .insert({ checkpoint_id: checkpoint.id, user_id: currentUserId })
+
+      if (assignError) throw assignError
+
+      // 2. Mark as not vacant
+      const { error: updateError } = await supabase
+        .from('checkpoints')
+        .update({ is_vacant: false })
+        .eq('id', checkpoint.id)
+
+      if (updateError) throw updateError
+
+      toast.success("Task claimed!")
+      if (onRefresh) onRefresh()
+
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to claim task")
+    }
+  }
+
+  const handleRevert = async () => {
+    try {
+      // 1. Remove all assignments (or just revert status? User said "revertidas", likely means reset to vacant state)
+      // Let's reset to vacant and clear assignments to be safe/clean
+      const { error: deleteError } = await supabase
+        .from('checkpoint_assignments')
+        .delete()
+        .eq('checkpoint_id', checkpoint.id)
+
+      if (deleteError) throw deleteError
+
+      const { error: updateError } = await supabase
+        .from('checkpoints')
+        .update({ is_vacant: true })
+        .eq('id', checkpoint.id)
+
+      if (updateError) throw updateError
+
+      toast.success("Task reverted to vacant")
+      if (onRefresh) onRefresh()
+
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to revert task")
+    }
+  }
 
   const handleRemoveAssignee = async (userId: string) => {
     try {
@@ -123,36 +182,72 @@ function SortableCheckpointItem({
         className={`${checkpoint.is_completed ? "border-2" : ""} transition-all duration-200 ${isOver ? 'ring-2 ring-primary ring-offset-2 scale-[1.02]' : ''}`}
         style={cardStyle}
       >
-        <CardHeader className="flex flex-row items-center space-x-4 p-4 pb-2">
+        <CardHeader className="flex flex-row items-start space-x-4 p-4 pb-2">
           {/* Drag Handle */}
           <div
             {...attributes}
             {...listeners}
-            className="cursor-grab hover:text-primary touch-none"
+            className="cursor-grab hover:text-primary touch-none mt-1"
           >
             <GripVertical className="h-5 w-5 text-muted-foreground" />
           </div>
 
-          <div
-            className="flex-1 flex items-center justify-between cursor-pointer"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-medium flex items-center gap-2">
-                {checkpoint.title}
-              </CardTitle>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+          <div className="flex-1 space-y-1">
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    {checkpoint.title}
+                  </CardTitle>
+                  {isVacant && (
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-200">
+                      VACANT
+                    </Badge>
+                  )}
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                </div>
+                {checkpoint.description && isExpanded && (
+                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{checkpoint.description}</p>
+                )}
+              </div>
+
+              {checkpoint.is_completed ? (
+                <CheckCircle2
+                  className={`h-5 w-5 ${!checkpoint.completed_by ? "text-green-500" : ""}`}
+                  style={{
+                    color: cardStyle["borderColor" as keyof typeof cardStyle],
+                  }}
+                />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-300" />
+              )}
             </div>
 
-            {checkpoint.is_completed ? (
-              <CheckCircle2
-                className={`h-5 w-5 ${!checkpoint.completed_by ? "text-green-500" : ""}`}
-                style={{
-                  color: cardStyle["borderColor" as keyof typeof cardStyle],
-                }}
-              />
-            ) : (
-              <Circle className="h-5 w-5 text-gray-300" />
+            {/* Task Actions / Image / Claim */}
+            {(isVacant || checkpoint.image_url) && isExpanded && (
+              <div className="flex items-center gap-2 mt-2">
+                {checkpoint.image_url && (
+                  <Dialog open={showImage} onOpenChange={setShowImage}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1">
+                        <ImageIcon className="h-3 w-3" /> View Image
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl rounded-lg overflow-hidden p-0">
+                      <img src={checkpoint.image_url} alt="Task attachment" className="w-full h-auto" />
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                {isVacant && (
+                  <Button onClick={handleClaim} size="sm" className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700">
+                    Claim Task
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </CardHeader>
@@ -169,7 +264,7 @@ function SortableCheckpointItem({
 
           <div className="flex justify-between items-center pt-2">
             {/* Avatar Stack (Bottom Left) */}
-            <div className="flex items-center h-8">
+            <div className="flex items-center h-8 gap-2">
               {assignments.length > 0 && (
                 <Dialog open={showAssignees} onOpenChange={setShowAssignees}>
                   <DialogTrigger asChild>
@@ -220,6 +315,20 @@ function SortableCheckpointItem({
                   </DialogContent>
                 </Dialog>
               )}
+
+              {/* Revert Button for Admins if task was claimed (formerly vacant) or just has assignments */}
+              {isAdminOrManager && !isVacant && assignments.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRevert}
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-orange-600"
+                  title="Revert to Vacant (Clear Assignees)"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
+
             </div>
 
             <Dialog>
@@ -280,6 +389,7 @@ function SortableCheckpointItem({
 export function CheckpointList({
   checkpoints,
   userRole,
+  currentUserId,
   members,
   onRefresh
 }: CheckpointListProps) {
@@ -303,10 +413,10 @@ export function CheckpointList({
             key={checkpoint.id}
             checkpoint={checkpoint}
             userRole={userRole}
+            currentUserId={currentUserId}
             members={members}
             onSelect={() => { }}
-            onRefresh={checkpoints.length > 0 && 'onRefresh' in (arguments[0] || {}) ? (arguments[0] as any).onRefresh : undefined}  // Wait, I can't access arguments like this in map comfortably.
-          // I need to destructure onRefresh in CheckpointList props first.
+            onRefresh={onRefresh}
           />
         ))}
       </div>

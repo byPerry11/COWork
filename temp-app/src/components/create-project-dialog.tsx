@@ -61,9 +61,10 @@ const projectSchema = z.object({
 
 interface CreateProjectDialogProps {
   onSuccess: () => void
+  workGroupId?: string
 }
 
-export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [invitedUsers, setInvitedUsers] = useState<string[]>([])
@@ -99,6 +100,7 @@ export function CreateProjectDialog({ onSuccess }: CreateProjectDialogProps) {
           color: values.color,
           project_icon: values.project_icon,
           owner_id: session.user.id,
+          work_group_id: workGroupId || null, // Add work_group_id
           start_date: values.start_date.toISOString(),
           end_date: values.end_date ? values.end_date.toISOString() : null,
           max_users: values.max_users,

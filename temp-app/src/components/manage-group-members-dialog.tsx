@@ -1,0 +1,314 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Loader2, UserPlus, Trash2, Shield, User } from "lucide-react"
+import { toast } from "sonner"
+
+import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { supabase } from "@/lib/supabaseClient"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { UserMultiSelect } from "@/components/user-multi-select"
+
+const memberSchema = z.object({
+    username: z.string().min(1, "Select a user to add"),
+    role: z.enum(["admin", "manager", "member"]),
+})
+
+interface ManageGroupMembersDialogProps {
+    groupId: string
+    onMemberAdded?: () => void
+}
+
+interface Member {
+    user_id: string
+    role: string
+    joined_at: string
+    profiles: {
+        username: string | null
+        display_name: string | null
+    }
+}
+
+export function ManageGroupMembersDialog({ groupId, onMemberAdded }: ManageGroupMembersDialogProps) {
+    const [open, setOpen] = useState(false)
+    const [members, setMembers] = useState<Member[]>([])
+    const [loading, setLoading] = useState(false)
+    const [adding, setAdding] = useState(false)
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+
+    const form = useForm<z.infer<typeof memberSchema>>({
+        resolver: zodResolver(memberSchema),
+        defaultValues: {
+            username: "",
+            role: "member",
+        },
+    })
+
+    const fetchMembers = async () => {
+        setLoading(true)
+
+        // 1. Fetch group members
+        const { data: membersData, error: membersError } = await supabase
+            .from('work_group_members')
+            .select('user_id, role, joined_at')
+            .eq('work_group_id', groupId)
+
+        if (membersError) {
+            toast.error("Failed to load members")
+            console.error(membersError)
+            setLoading(false)
+            return
+        }
+
+        const memberUserIds = membersData.map(m => m.user_id)
+
+        if (memberUserIds.length === 0) {
+            setMembers([])
+            setLoading(false)
+            return
+        }
+
+        // 2. Fetch profiles for these users
+        const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, display_name')
+            .in('id', memberUserIds)
+
+        if (profilesError) {
+            console.error("Error fetching profiles for members", profilesError)
+        }
+
+        // 3. Combine data
+        const combinedMembers = membersData.map(member => {
+            const profile = profilesData?.find(p => p.id === member.user_id)
+            return {
+                ...member,
+                profiles: profile ? {
+                    username: profile.username,
+                    display_name: profile.display_name
+                } : { username: 'Unknown', display_name: 'Unknown User' }
+            }
+        })
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMembers(combinedMembers as any)
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        if (open) {
+            fetchMembers()
+        }
+    }, [open, groupId])
+
+    async function onSubmit(values: z.infer<typeof memberSchema>) {
+        setAdding(true)
+        try {
+            let targetUserId = selectedUserId
+
+            if (!targetUserId) {
+                // Fallback if not selected via UI but typeahead found exact match - unlikely with this component but good safety
+                // For now rely on selectedUserId
+                return;
+            }
+
+            // 2. Check if already member
+            const existing = members.find(m => m.user_id === targetUserId)
+            if (existing) {
+                toast.error("User is already a member")
+                return
+            }
+
+            // 3. Add to work_group_members
+            const { error: insertError } = await supabase
+                .from('work_group_members')
+                .insert({
+                    work_group_id: groupId,
+                    user_id: targetUserId,
+                    role: values.role,
+                })
+
+            if (insertError) throw insertError
+
+            toast.success("Member added successfully")
+            form.reset()
+            setSelectedUserId(null)
+            fetchMembers()
+            onMemberAdded?.()
+
+        } catch (error: any) {
+            toast.error("Failed to add member", {
+                description: error.message
+            })
+        } finally {
+            setAdding(false)
+        }
+    }
+
+    const removeMember = async (userId: string) => {
+        try {
+            const { error } = await supabase
+                .from('work_group_members')
+                .delete()
+                .eq('work_group_id', groupId)
+                .eq('user_id', userId)
+
+            if (error) throw error
+
+            toast.success("Member removed successfully")
+            setMembers(prev => prev.filter(m => m.user_id !== userId))
+            onMemberAdded?.()
+        } catch (error) {
+            console.error("Error removing member:", error)
+            toast.error("Failed to remove member")
+        }
+    }
+
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Invite Member
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle>Manage Group Members</DialogTitle>
+                    <DialogDescription>
+                        Invite users to join this work group.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {/* Add Member Form */}
+                <div className="p-4 bg-muted/50 rounded-lg border">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="username"
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Search User</FormLabel>
+                                        <div className="flex flex-col gap-2">
+                                            <FormControl>
+                                                {/* Use UserMultiSelect for searching and selecting users */}
+                                                <UserMultiSelect
+                                                    selectedUsers={selectedUserId ? [selectedUserId] : []}
+                                                    onSelectionChange={(users) => {
+                                                        const lastSelected = users[users.length - 1];
+                                                        setSelectedUserId(lastSelected || null);
+                                                        // Update form field for validation
+                                                        if (lastSelected) form.setValue("username", "selected");
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Role</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a role" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="member">Member</SelectItem>
+                                                <SelectItem value="manager">Manager</SelectItem>
+                                                <SelectItem value="admin">Admin</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button type="submit" size="sm" className="w-full" disabled={adding || !selectedUserId}>
+                                {adding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Add Member
+                            </Button>
+                        </form>
+                    </Form>
+                </div>
+
+                {/* Members List */}
+                <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Current Members</h4>
+                    <ScrollArea className="h-[200px] border rounded-md p-2">
+                        {loading ? (
+                            <div className="flex justify-center p-4">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {members.map((member) => (
+                                    <div key={member.user_id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <User className="h-4 w-4 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium leading-none">{member.profiles?.display_name || member.profiles?.username}</p>
+                                                <p className="text-xs text-muted-foreground">@{member.profiles?.username}</p>
+                                                <p className="text-xs text-muted-foreground capitalize flex items-center gap-1 mt-1">
+                                                    <Shield className="h-3 w-3" />
+                                                    {member.role}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => removeMember(member.user_id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
+                </div>
+
+            </DialogContent>
+        </Dialog>
+    )
+}

@@ -32,10 +32,10 @@ export function LeaveProjectDialog({ projectId, projectTitle }: LeaveProjectDial
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            // Update status to 'left' instead of hard delete to keep history/references
+            // Delete the member record to remove them completely from the project
             const { error } = await supabase
                 .from('project_members')
-                .update({ status: 'left' })
+                .delete()
                 .eq('project_id', projectId)
                 .eq('user_id', session.user.id)
 

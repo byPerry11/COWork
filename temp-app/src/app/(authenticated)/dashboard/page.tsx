@@ -6,11 +6,13 @@ import { supabase } from "@/lib/supabaseClient"
 import { Loader2 } from "lucide-react"
 
 import { ProjectCard } from "@/components/project-card"
+import { WorkGroupCard } from "@/components/work-group-card"
+import { CreateGroupDialog } from "@/components/create-group-dialog"
 import { CalendarWidget } from "@/components/calendar-widget"
 import { GlobalSearchBar } from "@/components/global-search-bar"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/hooks/useNotifications"
-import { getRandomQuote, MotivationalQuote } from "@/lib/motivational-quotes"
+import { getRandomQuote } from "@/lib/motivational-quotes"
 
 interface UserProject {
   id: string
@@ -27,11 +29,20 @@ interface UserProject {
   membershipStatus?: "active" | "pending" | "rejected"
 }
 
+interface UserWorkGroup {
+  id: string
+  name: string
+  description?: string | null
+  owner_id: string
+  memberCount: number
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [displayName, setDisplayName] = useState("")
   const [projects, setProjects] = useState<UserProject[]>([])
+  const [workGroups, setWorkGroups] = useState<UserWorkGroup[]>([])
 
   const [sessionUserId, setSessionUserId] = useState<string>("")
   const { handleProjectInvitation } = useNotifications()
@@ -76,6 +87,7 @@ export default function DashboardPage() {
     const projectsWithProgress = await Promise.all(
       projectMembers
         .map(async (member) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const project = member.project as any || {}
 
           let progress = 0
@@ -130,6 +142,47 @@ export default function DashboardPage() {
     setProjects(projectsWithProgress)
   }, [])
 
+  const fetchWorkGroups = useCallback(async (userId: string) => {
+    // Fetch groups where user is member or owner
+    // Thanks to RLS, we can just select from work_groups if we set policies correctly.
+    // However, to be safe and get member counts, let's fetch carefully.
+
+    try {
+      const { data: groups, error } = await supabase
+        .from('work_groups')
+        .select(`
+                id,
+                name,
+                description,
+                owner_id
+            `)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      if (!groups) {
+        setWorkGroups([])
+        return
+      }
+
+      const groupsWithCounts = await Promise.all(groups.map(async (group) => {
+        const { count } = await supabase
+          .from('work_group_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('work_group_id', group.id)
+
+        return {
+          ...group,
+          memberCount: count || 0
+        }
+      }))
+
+      setWorkGroups(groupsWithCounts)
+
+    } catch (error) {
+      console.error("Error fetching work groups:", error)
+    }
+  }, [])
 
 
   useEffect(() => {
@@ -150,17 +203,15 @@ export default function DashboardPage() {
 
       setDisplayName(profile?.display_name || profile?.username || "User")
 
-      await fetchProjects(session.user.id)
+      await Promise.all([
+        fetchProjects(session.user.id),
+        fetchWorkGroups(session.user.id)
+      ])
+
       setLoading(false)
     }
     checkUser()
-  }, [router, fetchProjects])
-
-  const calculateProgress = (checkpoints: Array<{ is_completed: boolean }>) => {
-    if (checkpoints.length === 0) return 0
-    const completed = checkpoints.filter(c => c.is_completed).length
-    return (completed / checkpoints.length) * 100
-  }
+  }, [router, fetchProjects, fetchWorkGroups])
 
   const handleInvitationResponse = async (projectId: string, accept: boolean) => {
     // Optimistic update: immediately update UI
@@ -192,7 +243,7 @@ export default function DashboardPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-4 md:p-6 space-y-6 pb-24 md:pb-6">
+        <div className="container mx-auto p-4 md:p-6 space-y-8 pb-24 md:pb-6">
           {/* Header with Search and Avatar */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center justify-between w-full md:w-auto">
@@ -204,21 +255,47 @@ export default function DashboardPage() {
                   "{randomQuote.text}" — <span className="font-medium">{randomQuote.author}</span>
                 </p>
               </div>
-              {/* App icon - mobile only */}
               <img
                 src="/main-logo.png"
                 alt="COWork"
                 className="h-12 w-12 rounded-xl shadow-md md:hidden object-cover"
               />
             </div>
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="flex-1 md:flex-initial">
-                <GlobalSearchBar />
-              </div>
 
-              {/* Responsive Notification Bell - Removed as per request */}
+            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+              <GlobalSearchBar />
+              <CreateGroupDialog onSuccess={() => fetchWorkGroups(sessionUserId)} />
             </div>
           </div>
+
+          {/* Work Groups Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Work Groups</h2>
+              <span className="text-sm text-muted-foreground">{workGroups.length}</span>
+            </div>
+
+            {workGroups.length === 0 ? (
+              <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/20">
+                <p className="text-muted-foreground text-sm">No work groups yet. Create one to organize your teams.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {workGroups.map(group => (
+                  <WorkGroupCard
+                    key={group.id}
+                    id={group.id}
+                    name={group.name}
+                    description={group.description}
+                    memberCount={group.memberCount}
+                    isOwner={group.owner_id === sessionUserId}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t pt-2" />
 
           {/* Projects Grid + Calendar */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -237,7 +314,6 @@ export default function DashboardPage() {
                 {projects.filter(p => p.owner_id === sessionUserId).length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed rounded-lg bg-muted/20">
                     <p className="text-muted-foreground">You haven't created any projects yet</p>
-                    {/* Optional: Add Create Project Button here if desired */}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
