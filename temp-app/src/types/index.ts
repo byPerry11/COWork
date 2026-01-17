@@ -34,6 +34,29 @@ export interface WorkGroupMember {
   profile?: Profile
 }
 
+export interface Task {
+  id: string
+  work_group_id: string
+  title: string
+  description?: string | null
+  status: 'pending' | 'in_progress' | 'completed'
+  is_free: boolean
+  member_limit?: number
+  created_by: string
+  created_at: string
+  assignments: TaskAssignment[]
+}
+
+export interface TaskAssignment {
+  task_id: string
+  user_id: string
+  assigned_at: string
+  user: {
+    username: string
+    avatar_url?: string
+  }
+}
+
 export interface Project {
   id: string
   work_group_id?: string | null // New field

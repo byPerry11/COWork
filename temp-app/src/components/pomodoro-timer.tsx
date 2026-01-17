@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { usePomodoro, WORK_DURATION, SHORT_BREAK, LONG_BREAK } from "@/contexts/pomodoro-context"
+import { usePomodoro, SESSIONS_BEFORE_LONG_BREAK } from "@/contexts/pomodoro-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -16,6 +16,7 @@ export function PomodoroTimer({ userId }: { userId: string }) {
         sessionCount,
         currentSessionId,
         stats,
+        settings,
         setUserId,
         startSession,
         pauseSession,
@@ -49,7 +50,7 @@ export function PomodoroTimer({ userId }: { userId: string }) {
                     icon: Brain,
                     color: 'text-blue-500',
                     bgColor: 'bg-blue-500/10',
-                    total: WORK_DURATION
+                    total: settings.workDuration
                 }
             case 'shortBreak':
                 return {
@@ -57,7 +58,7 @@ export function PomodoroTimer({ userId }: { userId: string }) {
                     icon: Coffee,
                     color: 'text-green-500',
                     bgColor: 'bg-green-500/10',
-                    total: SHORT_BREAK
+                    total: settings.shortBreakDuration
                 }
             case 'longBreak':
                 return {
@@ -65,7 +66,7 @@ export function PomodoroTimer({ userId }: { userId: string }) {
                     icon: Moon,
                     color: 'text-purple-500',
                     bgColor: 'bg-purple-500/10',
-                    total: LONG_BREAK
+                    total: settings.longBreakDuration
                 }
         }
     }
@@ -87,7 +88,10 @@ export function PomodoroTimer({ userId }: { userId: string }) {
     }
 
     return (
-        <Card className="w-full">
+        <Card className="w-full relative">
+            <div className="absolute top-4 right-4">
+                <PomodoroSettingsDialog />
+            </div>
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
@@ -183,5 +187,100 @@ export function PomodoroTimer({ userId }: { userId: string }) {
                 </div>
             </CardContent>
         </Card>
+    )
+}
+
+import { Settings } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+
+function PomodoroSettingsDialog() {
+    const { settings, updateSettings } = usePomodoro()
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Settings className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Configuración del Pomodoro</DialogTitle>
+                    <DialogDescription>
+                        Ajusta la duración de los ciclos y el comportamiento automático.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="work" className="text-right col-span-2">
+                            Concentración (min)
+                        </Label>
+                        <Input
+                            id="work"
+                            type="number"
+                            value={settings.workDuration / 60}
+                            onChange={(e) => updateSettings({ workDuration: Number(e.target.value) * 60 })}
+                            className="col-span-2"
+                        />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="shortBreak" className="text-right col-span-2">
+                            Descanso Corto (min)
+                        </Label>
+                        <Input
+                            id="shortBreak"
+                            type="number"
+                            value={settings.shortBreakDuration / 60}
+                            onChange={(e) => updateSettings({ shortBreakDuration: Number(e.target.value) * 60 })}
+                            className="col-span-2"
+                        />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="longBreak" className="text-right col-span-2">
+                            Descanso Largo (min)
+                        </Label>
+                        <Input
+                            id="longBreak"
+                            type="number"
+                            value={settings.longBreakDuration / 60}
+                            onChange={(e) => updateSettings({ longBreakDuration: Number(e.target.value) * 60 })}
+                            className="col-span-2"
+                        />
+                    </div>
+                    <div className="flex items-center justify-between space-x-2">
+                        <Label htmlFor="autoBreaks" className="flex flex-col space-y-1">
+                            <span>Auto-iniciar Descansos</span>
+                            <span className="font-normal text-xs text-muted-foreground">Iniciar descanso automáticamente al terminar trabajo</span>
+                        </Label>
+                        <Switch
+                            id="autoBreaks"
+                            checked={settings.autoStartBreaks}
+                            onCheckedChange={(checked) => updateSettings({ autoStartBreaks: checked })}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between space-x-2">
+                        <Label htmlFor="autoWork" className="flex flex-col space-y-1">
+                            <span>Auto-iniciar Trabajo</span>
+                            <span className="font-normal text-xs text-muted-foreground">Iniciar trabajo automáticamente al terminar descanso</span>
+                        </Label>
+                        <Switch
+                            id="autoWork"
+                            checked={settings.autoStartWork}
+                            onCheckedChange={(checked) => updateSettings({ autoStartWork: checked })}
+                        />
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     )
 }
