@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabaseClient"
+import { submitEvidence } from "@/app/actions/evidences"
 import { checkAchievementsAndNotify } from "@/lib/achievements"
 import {
   AlertDialog,
@@ -65,7 +66,7 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
         .select('project:projects(title)')
         .eq('id', checkpointId)
         .single()
-      
+
       if (data?.project) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setProjectName((data.project as any).title || "Project")
@@ -113,8 +114,8 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
 
   async function onSubmit(values: z.infer<typeof evidenceSchema>) {
     if (!values.note && !file) {
-      toast.error("Empty Submission", {
-        description: "Please provide a note, or attach a photo/document."
+      toast.error('Envío vacío', {
+        description: 'Por favor proporciona una nota o adjunta una foto/documento.',
       })
       return
     }
@@ -123,20 +124,18 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        toast.error("You must be logged in")
+        toast.error('Debes estar autenticado')
         return
       }
 
-      let imageUrl = null
+      let imageUrl: string | undefined = undefined
 
+      // Upload image if provided
       if (file) {
         const fileExt = file.name.split('.').pop()
-        
-        // Format: Evidencia_NombreProyecto_YYYY-MM-DD_HH-mm-ss
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
         const sanitizedProject = projectName.replace(/[^a-zA-Z0-9]/g, '_')
         const fileName = `Evidencia_${sanitizedProject}_${timestamp}.${fileExt}`
-        
         const filePath = `${checkpointId}/${fileName}`
 
         const { error: uploadError } = await supabase.storage
@@ -144,81 +143,43 @@ export function EvidenceForm({ checkpointId, onSuccess, onCancel }: EvidenceForm
           .upload(filePath, file)
 
         if (uploadError) {
-          console.warn("Upload failed:", uploadError)
-          toast.error("File upload failed. Please try again.")
+          console.warn('Upload failed:', uploadError)
+          toast.error('Error al subir el archivo')
           setIsLoading(false)
           return
-        } else {
-          const { data: { publicUrl } } = supabase.storage
-            .from('evidences')
-            .getPublicUrl(filePath)
-          imageUrl = publicUrl
         }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidences')
+          .getPublicUrl(filePath)
+        imageUrl = publicUrl
       }
 
-      const { error: dbError } = await supabase
-        .from("evidences")
-        .insert({
-          checkpoint_id: checkpointId,
-          user_id: session.user.id,
-          note: values.note,
-          image_url: imageUrl
+      // Submit evidence using Server Action
+      const result = await submitEvidence({
+        checkpoint_id: checkpointId,
+        note: values.note,
+        image_url: imageUrl,
+      })
+
+      if (!result.success) {
+        toast.error('Error al guardar evidencia', {
+          description: result.error,
         })
-
-      if (dbError) throw dbError
-
-      // Fetch checkpoint details for notification
-      const { data: cpData } = await supabase
-        .from('checkpoints')
-        .select('title, project_id, project:projects(title)')
-        .eq("id", checkpointId)
-        .single()
-
-      // Update Checkpoint
-      await supabase
-        .from("checkpoints")
-        .update({
-          is_completed: true,
-          completed_by: session.user.id,
-          completed_at: new Date().toISOString()
-        })
-        .eq("id", checkpointId)
-
-      // Notify other members
-      if (cpData) {
-        const { data: members } = await supabase
-          .from('project_members')
-          .select('user_id')
-          .eq('project_id', cpData.project_id)
-          .neq('user_id', session.user.id) // Don't notify self
-
-        if (members && members.length > 0) {
-          const notifications = members.map(m => ({
-            user_id: m.user_id,
-            type: 'checkpoint_completed',
-            title: 'Checkpoint Completed',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            message: `A task has been completed in ${(cpData.project as any)?.title || 'Project'}`,
-            reference_id: cpData.project_id
-          }))
-
-          await supabase.from('notifications').insert(notifications)
-        }
+        return
       }
 
-      toast.success("Evidence saved successfully!")
+      toast.success('¡Evidencia guardada exitosamente!')
 
-      // Check and unlock achievements for checkpoint completion
+      // Check achievements
       await checkAchievementsAndNotify(session.user.id, 'checkpoint_completed')
 
       form.reset()
       setFile(null)
       onSuccess?.()
-    } catch (err: any) {
-      toast.error("Failed to save evidence", {
-        description: err.message
-      })
-      console.error(err)
+    } catch (err) {
+      console.error('Unexpected error:', err)
+      toast.error('Error inesperado')
     } finally {
       setIsLoading(false)
     }

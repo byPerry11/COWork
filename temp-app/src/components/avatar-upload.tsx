@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Upload, Loader2, User, Crop } from "lucide-react"
 import { toast } from "sonner"
 import imageCompression from 'browser-image-compression'
+import { updateAvatar } from "@/app/actions/profiles"
 
 interface AvatarUploadProps {
     userId: string
@@ -109,7 +110,7 @@ export function AvatarUpload({ userId }: AvatarUploadProps) {
                     // Extract filename from URL (remove query params)
                     const cleanUrl = avatarUrl.split('?')[0]
                     const oldPath = cleanUrl.split('/').pop()
-                    
+
                     if (oldPath) {
                         // We always use 'avatar.jpg' now, but just in case old legacy names exist
                         await supabase.storage.from('avatars').remove([`${userId}/${oldPath}`])
@@ -126,7 +127,7 @@ export function AvatarUpload({ userId }: AvatarUploadProps) {
                 .upload(filePath, processedFile, { upsert: true })
 
             if (uploadError) {
-                console.error("Supabase Upload Error:", uploadError) 
+                console.error("Supabase Upload Error:", uploadError)
                 throw uploadError
             }
 
@@ -137,21 +138,21 @@ export function AvatarUpload({ userId }: AvatarUploadProps) {
 
             const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`
 
-            // Update profile
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ avatar_url: urlWithCacheBuster })
-                .eq('id', userId)
+            // Update profile using Server Action
+            const result = await updateAvatar(urlWithCacheBuster)
 
-            if (updateError) throw updateError
+            if (!result.success) {
+                toast.error('Error al actualizar avatar', {
+                    description: result.error,
+                })
+                return
+            }
 
             setAvatarUrl(urlWithCacheBuster)
             toast.success('Foto de perfil actualizada y optimizada')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            toast.error('Error al subir la imagen', {
-                description: error.message
-            })
+        } catch (error) {
+            console.error('Unexpected error:', error)
+            toast.error('Error al subir la imagen')
         } finally {
             setUploading(false)
             if (fileInputRef.current) {

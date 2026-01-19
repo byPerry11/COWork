@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { updateProfile } from "@/app/actions/profiles"
 
 const profileSchema = z.object({
     username: z.string().min(3, "El nombre de usuario debe tener al menos 3 caracteres").max(20),
@@ -55,22 +56,21 @@ export function ProfileEditForm({ userId }: ProfileEditFormProps) {
     const onSubmit = async (values: z.infer<typeof profileSchema>) => {
         setLoading(true)
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    username: values.username,
-                    display_name: values.display_name,
-                })
-                .eq('id', userId)
+            const result = await updateProfile({
+                display_name: values.display_name,
+            })
 
-            if (error) throw error
+            if (!result.success) {
+                toast.error('Error al actualizar perfil', {
+                    description: result.error,
+                })
+                return
+            }
 
             toast.success('Perfil actualizado correctamente')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            toast.error('Error al actualizar perfil', {
-                description: error.message
-            })
+        } catch (error) {
+            console.error('Unexpected error:', error)
+            toast.error('Error inesperado')
         } finally {
             setLoading(false)
         }
