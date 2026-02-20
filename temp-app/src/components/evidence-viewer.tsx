@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Loader2, User, FileText, Calendar } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-// import { format } from "date-fns" // Unused import
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Star } from "lucide-react"
 import { toast } from "sonner"
+import { approveEvidence, rejectEvidence } from "@/app/actions/evidences"
 import { Card, CardContent } from "@/components/ui/card"
 import {
     Dialog,
@@ -209,7 +209,24 @@ function ReviewSection({
         try {
             const numRating = parseFloat(rating)
             if (isNaN(numRating) || numRating < 1 || numRating > 10) {
-                toast.error("Invalid Rating", { description: "Rating must be between 1.0 and 10.0" })
+                toast.error('Calificación inválida', {
+                    description: 'La calificación debe estar entre 1.0 y 10.0'
+                })
+                setIsSaving(false)
+                return
+            }
+
+            // Get evidence ID
+            const { data: evidenceData } = await supabase
+                .from('evidences')
+                .select('id')
+                .eq('checkpoint_id', checkpointId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            if (!evidenceData?.id) {
+                toast.error('Evidencia no encontrada')
                 setIsSaving(false)
                 return
             }
@@ -219,65 +236,54 @@ function ReviewSection({
 
             if (isRejected) {
                 // REJECTION FLOW
-                // 1. Get current evidence ID
-                const { data: evidenceData } = await supabase
-                    .from('evidences')
-                    .select('id, user_id')
-                    .eq('checkpoint_id', checkpointId)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle()
-
-                // 2. Insert correction record
-                const { data: { user } } = await supabase.auth.getUser()
-                await supabase.from('checkpoint_corrections').insert({
-                    checkpoint_id: checkpointId,
-                    previous_evidence_id: evidenceData?.id,
-                    rejected_by: user?.id,
-                    rejection_rating: numRating,
-                    rejection_comment: comment
+                const result = await rejectEvidence({
+                    evidence_id: evidenceData.id,
+                    status: 'rejected',
+                    feedback: comment,
                 })
 
-                // 3. Update checkpoint: mark as incomplete, set rejection_reason
-                await supabase.from('checkpoints').update({
-                    is_completed: false,
-                    rating: numRating,
-                    admin_comment: comment,
-                    rejection_reason: comment
-                }).eq('id', checkpointId)
-
-                // 4. Delete the evidence to allow resubmission
-                if (evidenceData?.id) {
-                    await supabase.from('evidences').delete().eq('id', evidenceData.id)
+                if (!result.success) {
+                    toast.error('Error al rechazar evidencia', {
+                        description: result.error,
+                    })
+                    setIsSaving(false)
+                    return
                 }
 
-                toast.error("Checkpoint Rejected", {
-                    description: `Rating ${numRating}/10. Member will be notified to resubmit.`
+                toast.error('Checkpoint Rechazado', {
+                    description: `Calificación ${numRating}/10. El miembro será notificado para reenviar.`,
                 })
 
-                // Refresh logic
                 if (onSuccess) onSuccess()
             } else {
                 // APPROVAL FLOW (rating > 6)
-                const { error } = await supabase
+                const result = await approveEvidence(evidenceData.id)
+
+                if (!result.success) {
+                    toast.error('Error al aprobar evidencia', {
+                        description: result.error,
+                    })
+                    setIsSaving(false)
+                    return
+                }
+
+                // Update rating and comment in checkpoint
+                await supabase
                     .from('checkpoints')
                     .update({
                         rating: numRating,
                         admin_comment: comment,
-                        rejection_reason: null // Clear any previous rejection
                     })
                     .eq('id', checkpointId)
 
-                if (error) throw error
-
-                toast.success("Review saved - Checkpoint Approved")
+                toast.success('Revisión guardada - Checkpoint Aprobado')
                 setHasReview(true)
                 setIsEditing(false)
                 if (onSuccess) onSuccess()
             }
         } catch (error) {
-            toast.error("Failed to save review")
-            console.error(error)
+            console.error('Unexpected error:', error)
+            toast.error('Error inesperado')
         } finally {
             setIsSaving(false)
         }

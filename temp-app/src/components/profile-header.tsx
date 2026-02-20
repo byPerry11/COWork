@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { UserPlus, UserCheck, Check, MessageCircle, Settings, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { sendFriendRequest, acceptFriendRequest } from "@/app/actions/friends"
 
 interface ProfileHeaderProps {
     profile: any
@@ -69,41 +70,54 @@ export function ProfileHeader({ profile, currentUserId }: ProfileHeaderProps) {
 
     const handleSendRequest = async () => {
         setRequestSending(true)
-        const { error } = await supabase
-            .from('friend_requests')
-            .insert({
-                sender_id: currentUserId,
-                receiver_id: profile.id
-            })
+        try {
+            const result = await sendFriendRequest({ receiver_id: profile.id })
 
-        setRequestSending(false)
+            if (!result.success) {
+                toast.error('Error al enviar solicitud', {
+                    description: result.error,
+                })
+                return
+            }
 
-        if (error) {
-            toast.error("Failed to send request")
-        } else {
-            toast.success("Friend request sent")
+            toast.success('Solicitud de amistad enviada')
             setFriendStatus('pending_sent')
+        } catch (error) {
+            console.error('Unexpected error:', error)
+            toast.error('Error inesperado')
+        } finally {
+            setRequestSending(false)
         }
     }
 
     const handleAccept = async () => {
-        const { data: req } = await supabase.from('friend_requests')
-            .select('id')
-            .eq('sender_id', profile.id)
-            .eq('receiver_id', currentUserId)
-            .eq('status', 'pending')
-            .single()
+        try {
+            const { data: req } = await supabase.from('friend_requests')
+                .select('id')
+                .eq('sender_id', profile.id)
+                .eq('receiver_id', currentUserId)
+                .eq('status', 'pending')
+                .single()
 
-        if (req) {
-            const { error } = await supabase
-                .from('friend_requests')
-                .update({ status: 'accepted' })
-                .eq('id', req.id)
-
-            if (!error) {
-                toast.success("Friend request accepted")
-                setFriendStatus('friends')
+            if (!req) {
+                toast.error('Solicitud no encontrada')
+                return
             }
+
+            const result = await acceptFriendRequest({ request_id: req.id })
+
+            if (!result.success) {
+                toast.error('Error al aceptar solicitud', {
+                    description: result.error,
+                })
+                return
+            }
+
+            toast.success('Solicitud de amistad aceptada')
+            setFriendStatus('friends')
+        } catch (error) {
+            console.error('Unexpected error:', error)
+            toast.error('Error inesperado')
         }
     }
 

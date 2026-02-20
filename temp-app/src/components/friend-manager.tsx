@@ -9,6 +9,7 @@ import { Loader2, Check, X, User, Users, Clock } from "lucide-react"
 import { toast } from "sonner"
 import { UserSearch } from "@/components/user-search"
 import { motion, AnimatePresence } from "framer-motion"
+import { acceptFriendRequest, rejectFriendRequest } from "@/app/actions/friends"
 
 interface Profile {
     id: string
@@ -158,31 +159,46 @@ export function FriendManager({ userId }: { userId: string }) {
 
     const handleResponse = async (requestId: string, status: 'accepted' | 'rejected') => {
         try {
-            const { error } = await supabase
-                .from('friend_requests')
-                .update({ status, updated_at: new Date().toISOString() })
-                .eq('id', requestId)
-
-            if (error) throw error
-            toast.success(`Request ${status}`)
+            if (status === 'accepted') {
+                const result = await acceptFriendRequest({ request_id: requestId })
+                if (!result.success) {
+                    toast.error('Error al aceptar solicitud', {
+                        description: result.error,
+                    })
+                    return
+                }
+                toast.success('Solicitud aceptada')
+            } else {
+                const result = await rejectFriendRequest({ request_id: requestId })
+                if (!result.success) {
+                    toast.error('Error al rechazar solicitud', {
+                        description: result.error,
+                    })
+                    return
+                }
+                toast.success('Solicitud rechazada')
+            }
             fetchData() // Reload lists
-        } catch (error: any) {
-            toast.error("Failed to update request")
+        } catch (error) {
+            console.error('Unexpected error:', error)
+            toast.error('Error inesperado')
         }
     }
 
     const cancelRequest = async (requestId: string) => {
         try {
-            const { error } = await supabase
-                .from('friend_requests')
-                .delete()
-                .eq('id', requestId)
-
-            if (error) throw error
-            toast.success("Request cancelled")
+            const result = await rejectFriendRequest({ request_id: requestId })
+            if (!result.success) {
+                toast.error('Error al cancelar solicitud', {
+                    description: result.error,
+                })
+                return
+            }
+            toast.success('Solicitud cancelada')
             fetchData() // Reload lists
-        } catch (error: any) {
-            toast.error("Failed to cancel request")
+        } catch (error) {
+            console.error('Unexpected error:', error)
+            toast.error('Error inesperado')
         }
     }
 
@@ -215,8 +231,8 @@ export function FriendManager({ userId }: { userId: string }) {
                         <button
                             onClick={() => setActiveTab('friends')}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'friends'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             <Users className="h-4 w-4" />
@@ -230,8 +246,8 @@ export function FriendManager({ userId }: { userId: string }) {
                         <button
                             onClick={() => setActiveTab('requests')}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'requests'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             <Clock className="h-4 w-4" />
@@ -327,7 +343,7 @@ export function FriendManager({ userId }: { userId: string }) {
                                                         transition={{ delay: index * 0.05 }}
                                                         className="flex items-center justify-between p-3 border rounded-lg bg-green-50/50 dark:bg-green-950/20"
                                                     >
-                                                        <div 
+                                                        <div
                                                             className="flex items-center gap-3 cursor-pointer"
                                                             onClick={() => router.push(`/users/${req.sender_id}`)}
                                                         >
@@ -367,7 +383,7 @@ export function FriendManager({ userId }: { userId: string }) {
                                                         transition={{ delay: (requests.length + index) * 0.05 }}
                                                         className="flex items-center justify-between p-3 border rounded-lg"
                                                     >
-                                                        <div 
+                                                        <div
                                                             className="flex items-center gap-3 cursor-pointer"
                                                             onClick={() => router.push(`/users/${req.receiver_id}`)}
                                                         >

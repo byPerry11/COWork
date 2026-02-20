@@ -8,8 +8,8 @@ import { EvidenceViewer } from "@/components/evidence-viewer";
 import { CheckpointTasksList } from "@/components/projects/checkpoint-tasks-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabaseClient";
 import { AvatarStack } from "@/components/avatar-stack";
+import { claimCheckpoint, revertCheckpointToVacant, removeCheckpointAssignee } from "@/app/actions/checkpoints";
 import {
   Dialog,
   DialogContent,
@@ -108,71 +108,58 @@ function SortableCheckpointItem({
 
   const handleClaim = async () => {
     try {
-      // 1. Insert assignment
-      const { error: assignError } = await supabase
-        .from('checkpoint_assignments')
-        .insert({ checkpoint_id: checkpoint.id, user_id: currentUserId })
+      const result = await claimCheckpoint(checkpoint.id)
 
-      if (assignError) throw assignError
+      if (!result.success) {
+        toast.error('Error al reclamar checkpoint', {
+          description: result.error,
+        })
+        return
+      }
 
-      // 2. Mark as not vacant
-      const { error: updateError } = await supabase
-        .from('checkpoints')
-        .update({ is_vacant: false })
-        .eq('id', checkpoint.id)
-
-      if (updateError) throw updateError
-
-      toast.success("Task claimed!")
+      toast.success('¡Checkpoint reclamado!')
       if (onRefresh) onRefresh()
-
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to claim task")
+      console.error('Unexpected error:', error)
+      toast.error('Error inesperado')
     }
   }
 
   const handleRevert = async () => {
     try {
-      // 1. Remove all assignments (or just revert status? User said "revertidas", likely means reset to vacant state)
-      // Let's reset to vacant and clear assignments to be safe/clean
-      const { error: deleteError } = await supabase
-        .from('checkpoint_assignments')
-        .delete()
-        .eq('checkpoint_id', checkpoint.id)
+      const result = await revertCheckpointToVacant(checkpoint.id)
 
-      if (deleteError) throw deleteError
+      if (!result.success) {
+        toast.error('Error al revertir checkpoint', {
+          description: result.error,
+        })
+        return
+      }
 
-      const { error: updateError } = await supabase
-        .from('checkpoints')
-        .update({ is_vacant: true })
-        .eq('id', checkpoint.id)
-
-      if (updateError) throw updateError
-
-      toast.success("Task reverted to vacant")
+      toast.success('Checkpoint revertido a vacante')
       if (onRefresh) onRefresh()
-
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to revert task")
+      console.error('Unexpected error:', error)
+      toast.error('Error inesperado')
     }
   }
 
   const handleRemoveAssignee = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('checkpoint_assignments')
-        .delete()
-        .match({ checkpoint_id: checkpoint.id, user_id: userId })
+      const result = await removeCheckpointAssignee(checkpoint.id, userId)
 
-      if (error) throw error
-      toast.success("Assignee removed")
-      if (onRefresh) onRefresh();
+      if (!result.success) {
+        toast.error('Error al remover asignado', {
+          description: result.error,
+        })
+        return
+      }
 
-    } catch (e) {
-      console.error(e)
-      toast.error("Failed to remove assignee")
+      toast.success('Asignado removido')
+      if (onRefresh) onRefresh()
+    } catch (error) {
+      console.error('Unexpected error:', error)
+      toast.error('Error inesperado')
     }
   }
 

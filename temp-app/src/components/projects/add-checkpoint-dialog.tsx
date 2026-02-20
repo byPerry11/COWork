@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { createCheckpoint } from "@/app/actions/checkpoints"
 import { supabase } from "@/lib/supabaseClient"
 
 const checkpointSchema = z.object({
@@ -69,8 +70,9 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
   async function onSubmit(values: z.infer<typeof checkpointSchema>) {
     setIsLoading(true)
     try {
-      let imageUrl = null
+      let imageUrl: string | undefined = undefined
 
+      // Upload image if provided
       if (file) {
         const fileExt = file.name.split('.').pop()
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
@@ -78,45 +80,47 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
         const filePath = `checkpoints/${fileName}`
 
         const { error: uploadError } = await supabase.storage
-          .from('evidences') // Reusing evidences bucket for now
+          .from('evidences')
           .upload(filePath, file)
 
         if (uploadError) {
           console.warn("Upload failed:", uploadError)
-          toast.error("File upload failed")
-          // Continue without image or return? Let's continue but warn
-        } else {
-          const { data: { publicUrl } } = supabase.storage
-            .from('evidences')
-            .getPublicUrl(filePath)
-          imageUrl = publicUrl
+          toast.error("Error al subir la imagen")
+          setIsLoading(false)
+          return
         }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidences')
+          .getPublicUrl(filePath)
+        imageUrl = publicUrl
       }
 
-      const { error } = await supabase
-        .from('checkpoints')
-        .insert({
-          project_id: projectId,
-          title: values.title,
-          description: values.description || null,
-          order: values.order,
-          is_completed: false,
-          is_vacant: values.is_vacant,
-          image_url: imageUrl
+      // Create checkpoint using Server Action
+      const result = await createCheckpoint({
+        project_id: projectId,
+        title: values.title,
+        description: values.description,
+        order: values.order,
+        is_vacant: values.is_vacant,
+        image_url: imageUrl,
+      })
+
+      if (!result.success) {
+        toast.error('Error al crear checkpoint', {
+          description: result.error,
         })
+        return
+      }
 
-      if (error) throw error
-
-      toast.success("Task added successfully")
+      toast.success('Checkpoint creado exitosamente')
       setOpen(false)
       form.reset()
       setFile(null)
       onSuccess()
-
-    } catch (error: any) {
-      toast.error("Failed to add task", {
-        description: error.message
-      })
+    } catch (error) {
+      console.error('Unexpected error:', error)
+      toast.error('Error inesperado')
     } finally {
       setIsLoading(false)
     }
@@ -175,10 +179,10 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
                   <FormItem className="flex-1">
                     <FormLabel>Order</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min={1} 
-                        {...field} 
+                      <Input
+                        type="number"
+                        min={1}
+                        {...field}
                         onChange={e => field.onChange(e.target.valueAsNumber)}
                       />
                     </FormControl>
