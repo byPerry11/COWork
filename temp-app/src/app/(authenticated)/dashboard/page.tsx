@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { Loader2 } from "lucide-react"
 
-import { ProjectCard } from "@/components/project-card"
+import { ProjectCard } from "@/components/projects/project-card"
 import { WorkGroupCard } from "@/components/work-group-card"
 import { CreateGroupDialog } from "@/components/create-group-dialog"
 import { CalendarWidget } from "@/components/calendar-widget"
-import { GlobalSearchBar } from "@/components/global-search-bar"
+import { GlobalSearchBar } from "@/components/layout/global-search-bar"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/hooks/useNotifications"
 import { getRandomQuote } from "@/lib/motivational-quotes"
@@ -55,7 +55,7 @@ export default function DashboardPage() {
   const calendarEvents = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events: any[] = []
-    
+
     projects.forEach(project => {
       // 1. Project Deadline
       if (project.end_date && project.status === 'active') {
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         })
       }
     })
-    
+
     return events
   }, [projects])
 

@@ -88,6 +88,10 @@ export interface ProjectMember {
   joined_at: string
 }
 
+export interface ProjectMemberWithProfile extends ProjectMember {
+  profile: Profile | null
+}
+
 export interface Checkpoint {
   id: string
   project_id: string

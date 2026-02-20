@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Camera, GripVertical, ChevronDown, User as UserIcon, X as XIcon, ImageIcon, AlertCircle, RotateCcw } from "lucide-react";
 import { EvidenceForm } from "@/components/evidence-form";
 import { EvidenceViewer } from "@/components/evidence-viewer";
-import { CheckpointTasksList } from "@/components/checkpoint-tasks-list";
+import { CheckpointTasksList } from "@/components/projects/checkpoint-tasks-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";

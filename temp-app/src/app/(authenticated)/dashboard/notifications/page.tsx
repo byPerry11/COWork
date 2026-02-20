@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { NotificationsList } from "@/components/notifications-list"
+import { NotificationsList } from "@/components/layout/notifications-list";
 
 export default function NotificationsPage() {
     const router = useRouter()

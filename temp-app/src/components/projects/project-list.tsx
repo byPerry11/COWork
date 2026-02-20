@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Project, Role } from "@/types"
-import { ProjectCard } from "@/components/project-card"
+import { ProjectCard } from "@/components/projects/project-card"
 
 interface ProjectListProps {
   userId: string

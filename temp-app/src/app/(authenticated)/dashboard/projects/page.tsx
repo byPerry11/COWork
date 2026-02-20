@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { Loader2 } from "lucide-react"
 
-import { CreateProjectDialog } from "@/components/create-project-dialog"
-import { ProjectList } from "@/components/project-list"
-import { StatsCards } from "@/components/stats-cards"
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog"
+import { ProjectList } from "@/components/projects/project-list"
+import { StatsCards } from "@/components/projects/stats-cards"
 
 export default function ProjectsPage() {
     const router = useRouter()

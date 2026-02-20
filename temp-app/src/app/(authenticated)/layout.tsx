@@ -1,6 +1,6 @@
-import { FloatingNav } from "@/components/floating-nav"
+import { FloatingNav } from "@/components/layout/floating-nav"
 import { PomodoroProvider } from "@/contexts/pomodoro-context"
-import { MiniPomodoroTimer } from "@/components/mini-pomodoro-timer"
+import { MiniPomodoroTimer } from "@/components/layout/mini-pomodoro-timer"
 
 export default function AuthenticatedLayout({
     children,

@@ -20,7 +20,7 @@ import { AvatarUpload } from "@/components/avatar-upload"
 import { AchievementsDisplay } from "@/components/achievements-display"
 import { FriendManager } from "@/components/friend-manager"
 import { SettingsDialog } from "@/components/settings-dialog"
-import { ToolsMenu } from "@/components/tools-menu"
+import { ToolsMenu } from "@/components/layout/tools-menu"
 import { Settings as SettingsIcon } from "lucide-react"
 
 export default function ProfilePage() {

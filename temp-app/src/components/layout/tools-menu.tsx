@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Wrench, Timer, Target } from "lucide-react"
-import { PomodoroTimer } from "@/components/pomodoro-timer"
-import { ProjectCheckpointsView } from "@/components/project-checkpoints-view"
+import { PomodoroTimer } from "@/components/layout/pomodoro-timer"
+import { ProjectCheckpointsView } from "@/components/projects/project-checkpoints-view"
 
 interface ToolsMenuProps {
     userId: string
