@@ -38,19 +38,7 @@ export async function GET(request: Request) {
 
     if (!error) {
       console.log('Auth Callback: Session exchanged successfully for user:', data.user?.email)
-      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-      const isLocalEnv = process.env.NODE_ENV === 'development'
-
-      if (isLocalEnv) {
-        console.log('Auth Callback: Local environment detected, redirecting to:', `${origin}${next}`)
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        console.log('Auth Callback: Forwarded host detected, redirecting to:', `https://${forwardedHost}${next}`)
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        console.log('Auth Callback: Production/Preview environment, redirecting to:', `${origin}${next}`)
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+      return NextResponse.redirect(`${origin}${next}`)
     } else {
       console.error('Auth Callback: Error exchanging code for session:', error)
     }

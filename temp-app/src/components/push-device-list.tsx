@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Trash2, Smartphone, Monitor, Globe } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { UAParser } from "ua-parser-js"
+// UAParser removed to fix build error
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -69,14 +69,14 @@ export function PushDeviceList() {
       if (response.ok) {
         setSubscriptions(prev => prev.filter(s => s.id !== id))
         toast.success("Device removed")
-        
+
         // If we removed the current device, we should update the Service Worker state locally
         if (endpoint === currentEndpoint) {
-           const registration = await navigator.serviceWorker.ready
-           const sub = await registration.pushManager.getSubscription()
-           if (sub) {
-             await sub.unsubscribe()
-           }
+          const registration = await navigator.serviceWorker.ready
+          const sub = await registration.pushManager.getSubscription()
+          if (sub) {
+            await sub.unsubscribe()
+          }
         }
       } else {
         toast.error("Failed to remove device")
@@ -90,11 +90,9 @@ export function PushDeviceList() {
   }
 
   const getDeviceIcon = (uaString: string) => {
-    const parser = new UAParser(uaString)
-    const device = parser.getDevice()
-    const os = parser.getOS()
-
-    if (device.type === 'mobile' || os.name?.toLowerCase().includes('android') || os.name?.toLowerCase().includes('ios')) {
+    if (!uaString) return <Monitor className="h-5 w-5" />
+    const ua = uaString.toLowerCase()
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone') || ua.includes('ipad')) {
       return <Smartphone className="h-5 w-5" />
     }
     return <Monitor className="h-5 w-5" />
@@ -102,13 +100,11 @@ export function PushDeviceList() {
 
   const getDeviceName = (uaString: string) => {
     if (!uaString) return "Unknown Device"
-    const parser = new UAParser(uaString)
-    const browser = parser.getBrowser()
-    const os = parser.getOS()
-    const device = parser.getDevice()
-
-    const deviceName = device.model || (os.name?.includes('Windows') ? 'PC' : os.name)
-    return `${browser.name} on ${os.name}`
+    if (uaString.includes('Windows')) return "Windows PC"
+    if (uaString.includes('Macintosh')) return "Mac"
+    if (uaString.includes('Android')) return "Android Device"
+    if (uaString.includes('iPhone')) return "iPhone"
+    return "Browser"
   }
 
   if (loading) {
@@ -123,7 +119,7 @@ export function PushDeviceList() {
     <div className="space-y-4">
       {subscriptions.map((sub) => {
         const isCurrentDevice = sub.endpoint === currentEndpoint
-        
+
         return (
           <div key={sub.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
             <div className="flex items-center gap-3">
@@ -146,7 +142,7 @@ export function PushDeviceList() {
                 </p>
               </div>
             </div>
-            
+
             <Button
               variant="ghost"
               size="icon"
