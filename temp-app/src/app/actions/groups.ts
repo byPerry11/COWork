@@ -80,7 +80,7 @@ export async function createGroup(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Validar datos
@@ -145,7 +145,7 @@ export async function updateGroup(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateGroupSchema.parse(data)
@@ -208,7 +208,7 @@ export async function transferGroupOwnership(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = transferGroupOwnershipSchema.parse(data)
@@ -293,7 +293,7 @@ export async function deleteGroup(groupId: string): Promise<ActionResult> {
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Verificar que el usuario es el owner

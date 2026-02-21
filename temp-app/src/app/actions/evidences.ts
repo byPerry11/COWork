@@ -84,7 +84,7 @@ export async function submitEvidence(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = submitEvidenceSchema.parse(data)
@@ -154,7 +154,7 @@ export async function updateEvidence(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateEvidenceSchema.parse(data)
@@ -224,7 +224,7 @@ export async function deleteEvidence(evidenceId: string): Promise<ActionResult> 
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Obtener evidencia con checkpoint y project_id
@@ -291,7 +291,7 @@ export async function approveEvidence(evidenceId: string): Promise<ActionResult>
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Obtener evidencia con checkpoint y project_id
@@ -363,7 +363,7 @@ export async function rejectEvidence(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = reviewEvidenceSchema.parse(data)

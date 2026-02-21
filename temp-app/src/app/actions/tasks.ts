@@ -80,7 +80,8 @@ export async function createTask(
         // Obtener usuario autenticado
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in createTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Validar datos
@@ -149,7 +150,8 @@ export async function updateTask(
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in updateTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateTaskSchema.parse(data)
@@ -235,7 +237,8 @@ export async function updateTaskStatus(
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in updateTaskStatus:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateTaskStatusSchema.parse(data)
@@ -309,7 +312,8 @@ export async function deleteTask(taskId: string): Promise<ActionResult> {
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in deleteTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Obtener la tarea
@@ -361,7 +365,8 @@ export async function assignMemberToTask(
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in assignMemberToTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = assignMemberSchema.parse(data)
@@ -447,7 +452,8 @@ export async function unassignMemberFromTask(
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in unassignMemberFromTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = assignMemberSchema.parse(data)
@@ -503,7 +509,8 @@ export async function joinTask(taskId: string): Promise<ActionResult> {
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in joinTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Obtener la tarea
@@ -581,7 +588,8 @@ export async function leaveTask(taskId: string): Promise<ActionResult> {
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            console.warn('Auth error in leaveTask:', authError)
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Obtener la tarea

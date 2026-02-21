@@ -41,7 +41,7 @@ export async function updateProfile(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateProfileSchema.parse(data)
@@ -88,7 +88,7 @@ export async function updateAvatar(avatarUrl: string): Promise<ActionResult> {
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Validar URL
@@ -134,7 +134,7 @@ export async function updatePassword(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updatePasswordSchema.parse(data)

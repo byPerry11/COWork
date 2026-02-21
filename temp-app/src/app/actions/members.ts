@@ -129,7 +129,7 @@ export async function inviteMemberToProject(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = inviteMemberToProjectSchema.parse(data)
@@ -224,7 +224,7 @@ export async function removeMemberFromProject(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = removeMemberFromProjectSchema.parse(data)
@@ -292,7 +292,7 @@ export async function updateMemberRole(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateMemberRoleSchema.parse(data)
@@ -360,7 +360,7 @@ export async function respondToProjectInvitation(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = respondToInvitationSchema.parse(data)
@@ -421,7 +421,7 @@ export async function leaveProject(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = leaveProjectSchema.parse(data)
@@ -483,7 +483,7 @@ export async function inviteMemberToGroup(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = inviteMemberToGroupSchema.parse(data)
@@ -554,7 +554,7 @@ export async function removeMemberFromGroup(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = removeMemberFromGroupSchema.parse(data)
@@ -622,7 +622,7 @@ export async function updateGroupMemberRole(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateGroupMemberRoleSchema.parse(data)

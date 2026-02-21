@@ -30,17 +30,13 @@ export async function middleware(request: NextRequest) {
     )
 
     // IMPORTANT: Avoid writing any logic between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
-
+    // supabase.auth.getUser().
     const {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Refresh session if user is logged in
-    if (user) {
-        await supabase.auth.getSession()
-    }
+    // Protected routes logic could go here
+    // For now, we just ensure the session is refreshed if valid
 
     return response
 }

@@ -89,7 +89,7 @@ export async function createCheckpoint(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = createCheckpointSchema.parse(data)
@@ -157,7 +157,7 @@ export async function updateCheckpoint(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateCheckpointSchema.parse(data)
@@ -227,7 +227,7 @@ export async function deleteCheckpoint(checkpointId: string): Promise<ActionResu
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Verificar permisos
@@ -285,7 +285,7 @@ export async function toggleCheckpointCompletion(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = toggleCheckpointSchema.parse(data)
@@ -372,7 +372,7 @@ export async function claimCheckpoint(checkpointId: string): Promise<ActionResul
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Obtener checkpoint con project_id
@@ -439,7 +439,7 @@ export async function revertCheckpointToVacant(checkpointId: string): Promise<Ac
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Verificar permisos
@@ -509,7 +509,7 @@ export async function removeCheckpointAssignee(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Verificar permisos

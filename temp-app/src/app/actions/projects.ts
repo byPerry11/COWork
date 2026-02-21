@@ -106,7 +106,7 @@ export async function createProject(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Validar datos
@@ -208,7 +208,7 @@ export async function updateProject(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateProjectSchema.parse(data)
@@ -275,7 +275,7 @@ export async function updateProjectVisibility(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = updateProjectVisibilitySchema.parse(data)
@@ -332,7 +332,7 @@ export async function transferProjectOwnership(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = transferProjectOwnershipSchema.parse(data)
@@ -420,7 +420,7 @@ export async function completeProject(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = completeProjectSchema.parse(data)
@@ -478,7 +478,7 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         // Verificar que el usuario es el owner

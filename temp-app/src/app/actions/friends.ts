@@ -42,7 +42,7 @@ export async function sendFriendRequest(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = sendFriendRequestSchema.parse(data)
@@ -114,7 +114,7 @@ export async function acceptFriendRequest(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = respondToRequestSchema.parse(data)
@@ -177,7 +177,7 @@ export async function rejectFriendRequest(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = respondToRequestSchema.parse(data)
@@ -240,7 +240,7 @@ export async function removeFriend(
             error: authError,
         } = await supabase.auth.getUser()
         if (authError || !user) {
-            return { success: false, error: 'No autenticado' }
+            return { success: false, error: 'Error de autenticación' }
         }
 
         const validated = removeFriendSchema.parse(data)
