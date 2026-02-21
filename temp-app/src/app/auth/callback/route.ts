@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
+    console.log('Auth Callback: Code received, exchanging for session...')
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,21 +34,28 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      console.log('Auth Callback: Session exchanged successfully for user:', data.user?.email)
       const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development'
 
       if (isLocalEnv) {
-        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+        console.log('Auth Callback: Local environment detected, redirecting to:', `${origin}${next}`)
         return NextResponse.redirect(`${origin}${next}`)
       } else if (forwardedHost) {
+        console.log('Auth Callback: Forwarded host detected, redirecting to:', `https://${forwardedHost}${next}`)
         return NextResponse.redirect(`https://${forwardedHost}${next}`)
       } else {
+        console.log('Auth Callback: Production/Preview environment, redirecting to:', `${origin}${next}`)
         return NextResponse.redirect(`${origin}${next}`)
       }
+    } else {
+      console.error('Auth Callback: Error exchanging code for session:', error)
     }
+  } else {
+    console.warn('Auth Callback: No code provided in URL')
   }
 
   // return the user to an error page with instructions
@@ -57,5 +65,6 @@ export async function GET(request: Request) {
     errorParams.append(key, value)
   })
 
+  console.log('Auth Callback: Redirecting to auth-code-error with params:', errorParams.toString())
   return NextResponse.redirect(`${origin}/auth/auth-code-error?${errorParams.toString()}`)
 }

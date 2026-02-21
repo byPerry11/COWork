@@ -11,7 +11,8 @@ import { PushDeviceList } from "@/components/push-device-list"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { LogOut } from "lucide-react"
+import { LogOut, Link as LinkIcon } from "lucide-react"
+import { AccountLinking } from "@/components/account-linking"
 import {
   Dialog,
   DialogContent,
@@ -94,8 +95,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
 
             <div className="pt-2">
-              <h5 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Active Devices</h5>
+              <h5 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Dispositivos activos</h5>
               <PushDeviceList />
+            </div>
+
+            <div className="pt-4 border-t">
+              <h4 className="font-medium leading-none mb-4">Cuentas vinculadas</h4>
+              <AccountLinking />
             </div>
 
             <div className="pt-4 mt-2 border-t">
