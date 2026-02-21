@@ -98,10 +98,21 @@ export default function LoginPage() {
   // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        router.push("/dashboard")
-      } else {
+      try {
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null } }), 3000)
+        )
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any
+
+        if (session) {
+          router.push("/dashboard")
+        } else {
+          setCheckingSession(false)
+        }
+      } catch (error) {
+        console.error("Session check error:", error)
         setCheckingSession(false)
       }
     }

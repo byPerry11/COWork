@@ -31,9 +31,13 @@ export async function middleware(request: NextRequest) {
 
     // IMPORTANT: Avoid writing any logic between createServerClient and
     // supabase.auth.getUser().
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    // We add a short timeout to prevent infinite loading if Supabase is unreachable
+    const userPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+        setTimeout(() => resolve({ data: { user: null } }), 3000)
+    )
+
+    const { data: { user } } = await Promise.race([userPromise, timeoutPromise]) as any
 
     // Protected routes logic
     const isAuthRoute = request.nextUrl.pathname.startsWith('/(authenticated)') ||
