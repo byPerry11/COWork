@@ -1,417 +1,114 @@
-"use client"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { DashboardClient } from "./DashboardClient"
 
-import { useEffect, useState, useCallback, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
-import { Loader2 } from "lucide-react"
+export default async function DashboardPage() {
+  const supabase = await createClient()
 
-import { ProjectCard } from "@/components/projects/project-card"
-import { WorkGroupCard } from "@/components/work-group-card"
-import { CreateGroupDialog } from "@/components/create-group-dialog"
-import { CalendarWidget } from "@/components/calendar-widget"
-import { GlobalSearchBar } from "@/components/layout/global-search-bar"
-import { Button } from "@/components/ui/button"
-import { useNotifications } from "@/hooks/useNotifications"
-import { getRandomQuote } from "@/lib/motivational-quotes"
+  const { data: { session } } = await supabase.auth.getSession()
 
-interface UserProject {
-  id: string
-  title: string
-  description?: string | null
-  category?: string | null
-  color?: string | null
-  project_icon?: string | null
-  status: "active" | "completed" | "archived"
-  role: "admin" | "manager" | "member"
-  progress: number
-  memberCount: number
-  owner_id: string
-  membershipStatus?: "active" | "pending" | "rejected"
-  end_date?: string | null
-}
+  if (!session) {
+    redirect("/login")
+  }
 
-interface UserWorkGroup {
-  id: string
-  name: string
-  description?: string | null
-  owner_id: string
-  memberCount: number
-}
+  const userId = session.user.id
 
-export default function DashboardPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [displayName, setDisplayName] = useState("")
-  const [projects, setProjects] = useState<UserProject[]>([])
-  const [workGroups, setWorkGroups] = useState<UserWorkGroup[]>([])
+  // Fetch all data in parallel
+  const [profileRes, projectsRes, groupsRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", userId)
+      .single(),
 
-  const [sessionUserId, setSessionUserId] = useState<string>("")
-  const { handleProjectInvitation } = useNotifications()
-
-  // Get random motivational quote (stable per page load)
-  const randomQuote = useMemo(() => getRandomQuote(), [])
-
-  // Calculate calendar events from projects
-  const calendarEvents = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const events: any[] = []
-
-    projects.forEach(project => {
-      // 1. Project Deadline
-      if (project.end_date && project.status === 'active') {
-        events.push({
-          id: `deadline-${project.id}`,
-          title: `Deadline: ${project.title}`,
-          date: new Date(project.end_date),
-          color: project.color || '#6366f1',
-          type: 'project-deadline',
-          link: `/dashboard/projects/${project.id}`
-        })
-      }
-    })
-
-    return events
-  }, [projects])
-
-  const fetchProjects = useCallback(async (userId: string) => {
-    // Note: We don't set loading(true) here to avoid flickering on refresh
-    const { data: projectMembers, error: fetchError } = await supabase
+    // Optimized query to get projects, their checkpoints (for progress) and members (for avatars)
+    supabase
       .from("project_members")
       .select(`
-            project_id,
-            role,
+        role,
+        status,
+        project:project_id (
+          id,
+          title,
+          category,
+          description,
+          color,
+          project_icon,
+          status,
+          owner_id,
+          end_date,
+          checkpoints(is_completed),
+          members:project_members(
             status,
-            project:project_id (
-                id,
-                title,
-                category,
-                description,
-                color,
-                project_icon,
-                status,
-                owner_id,
-                end_date
-            )
-        `)
+            profiles(avatar_url)
+          )
+        )
+      `)
       .eq("user_id", userId)
-      .in("status", ["active", "pending"])
+      .in("status", ["active", "pending"]),
 
-    if (fetchError) {
-      console.error('❌ Error fetching projects:', fetchError)
-      setProjects([])
-      return
+    // Fetch groups with member counts
+    supabase
+      .from('work_groups')
+      .select(`
+        id,
+        name,
+        description,
+        owner_id,
+        members:work_group_members(id)
+      `)
+      .order('created_at', { ascending: false })
+  ])
+
+  const profile = profileRes.data
+  const displayName = profile?.display_name || profile?.username || "User"
+
+  // Process projects to calculate progress and format for client
+  const projects = (projectsRes.data || []).map((member: any) => {
+    const project = member.project
+    if (!project) return null
+
+    const checkpoints = project.checkpoints || []
+    const total = checkpoints.length
+    const completed = checkpoints.filter((c: any) => c.is_completed).length
+    const progress = total > 0 ? (completed / total) * 100 : 0
+
+    const activeMembers = (project.members || [])
+      .filter((m: any) => m.status === 'active')
+
+    return {
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      category: project.category,
+      color: project.color,
+      project_icon: project.project_icon || "🔒",
+      status: project.status || "active",
+      owner_id: project.owner_id,
+      role: member.role,
+      progress,
+      memberCount: activeMembers.length,
+      members: activeMembers.map((m: any) => ({ avatar_url: m.profiles?.avatar_url })),
+      membershipStatus: member.status,
+      end_date: project.end_date
     }
+  }).filter(Boolean)
 
-    if (!projectMembers) {
-      setProjects([])
-      return
-    }
-
-    // For each project, get checkpoints and calculate progress
-    const projectsWithProgress = await Promise.all(
-      projectMembers
-        .map(async (member) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const project = member.project as any || {}
-
-          let progress = 0
-          let memberCount = 0
-
-          if (project.id) {
-            const { data: checkpoints } = await supabase
-              .from("checkpoints")
-              .select("is_completed")
-              .eq("project_id", project.id)
-
-            const total = checkpoints?.length || 0
-            const completed = checkpoints?.filter(c => c.is_completed).length || 0
-            progress = total > 0 ? (completed / total) * 100 : 0
-
-            // Count members and get avatars
-            const { data: activeMembers, count, error: countError } = await supabase
-              .from("project_members")
-              .select("user_id, profiles(avatar_url)", { count: "exact" })
-              .eq("project_id", project.id)
-              .eq("status", "active")
-
-            if (countError) {
-              console.error("Error counting members for project", project.id, countError)
-            }
-
-            memberCount = count || 0
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const members = activeMembers?.map((m: any) => ({ avatar_url: m.profiles?.avatar_url })) || []
-
-            // @ts-ignore
-            project.members = members
-          }
-
-          return {
-            id: project.id || member.project_id,
-            title: project.title || "Private Project",
-            description: project.description,
-            category: project.category,
-            color: project.color,
-            project_icon: project.project_icon || "🔒",
-            status: project.status || "active",
-            owner_id: project.owner_id || "unknown",
-            role: member.role,
-            progress,
-            memberCount,
-            membershipStatus: member.status,
-            end_date: project.end_date
-          } as UserProject
-        })
-    )
-
-    setProjects(projectsWithProgress)
-  }, [])
-
-  const fetchWorkGroups = useCallback(async (userId: string) => {
-    // Fetch groups where user is member or owner
-    // Thanks to RLS, we can just select from work_groups if we set policies correctly.
-    // However, to be safe and get member counts, let's fetch carefully.
-
-    try {
-      const { data: groups, error } = await supabase
-        .from('work_groups')
-        .select(`
-                id,
-                name,
-                description,
-                owner_id
-            `)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      if (!groups) {
-        setWorkGroups([])
-        return
-      }
-
-      const groupsWithCounts = await Promise.all(groups.map(async (group) => {
-        const { count } = await supabase
-          .from('work_group_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('work_group_id', group.id)
-
-        return {
-          ...group,
-          memberCount: count || 0
-        }
-      }))
-
-      setWorkGroups(groupsWithCounts)
-
-    } catch (error) {
-      console.error("Error fetching work groups:", error)
-    }
-  }, [])
-
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push("/login")
-        return
-      }
-      setSessionUserId(session.user.id)
-
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name, username")
-        .eq("id", session.user.id)
-        .single()
-
-      setDisplayName(profile?.display_name || profile?.username || "User")
-
-      await Promise.all([
-        fetchProjects(session.user.id),
-        fetchWorkGroups(session.user.id)
-      ])
-
-      setLoading(false)
-    }
-    checkUser()
-  }, [router, fetchProjects, fetchWorkGroups])
-
-  const handleInvitationResponse = async (projectId: string, accept: boolean) => {
-    // Optimistic update: immediately update UI
-    if (accept) {
-      setProjects(prev => prev.map(p =>
-        p.id === projectId
-          ? { ...p, membershipStatus: 'active' as const }
-          : p
-      ))
-    } else {
-      // Remove from list if declining
-      setProjects(prev => prev.filter(p => p.id !== projectId))
-    }
-
-    // Update database (don't refresh immediately to avoid race condition)
-    await handleProjectInvitation(projectId, accept)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  // Process groups
+  const workGroups = (groupsRes.data || []).map((group: any) => ({
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    owner_id: group.owner_id,
+    memberCount: group.members?.length || 0
+  }))
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-background">
-
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-4 md:p-6 space-y-8 pb-24 md:pb-6">
-          {/* Header with Search and Avatar */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center justify-between w-full md:w-auto">
-              <div className="flex flex-col gap-0.5 md:gap-1">
-                <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-                  Hello, {displayName} 👋
-                </h1>
-                <p className="text-xs md:text-sm text-muted-foreground italic max-w-[250px] md:max-w-none line-clamp-2 md:line-clamp-none">
-                  "{randomQuote.text}" — <span className="font-medium">{randomQuote.author}</span>
-                </p>
-              </div>
-              <img
-                src="/main-logo.png"
-                alt="COWork"
-                className="h-12 w-12 rounded-xl shadow-md md:hidden object-cover"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-              <GlobalSearchBar />
-              <CreateGroupDialog onSuccess={() => fetchWorkGroups(sessionUserId)} />
-            </div>
-          </div>
-
-          {/* Work Groups Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Work Groups</h2>
-              <span className="text-sm text-muted-foreground">{workGroups.length}</span>
-            </div>
-
-            {workGroups.length === 0 ? (
-              <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/20">
-                <p className="text-muted-foreground text-sm">No work groups yet. Create one to organize your teams.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {workGroups.map(group => (
-                  <WorkGroupCard
-                    key={group.id}
-                    id={group.id}
-                    name={group.name}
-                    description={group.description}
-                    memberCount={group.memberCount}
-                    isOwner={group.owner_id === sessionUserId}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="border-t pt-2" />
-
-          {/* Projects Grid + Calendar */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Projects Grid - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2 space-y-8">
-
-              {/* Owned Projects Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">My Projects</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {projects.filter(p => p.owner_id === sessionUserId).length}
-                  </span>
-                </div>
-
-                {projects.filter(p => p.owner_id === sessionUserId).length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed rounded-lg bg-muted/20">
-                    <p className="text-muted-foreground">You haven't created any projects yet</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {projects
-                      .filter(p => p.owner_id === sessionUserId)
-                      .map(project => (
-                        <ProjectCard
-                          key={project.id}
-                          id={project.id}
-                          title={project.title}
-                          description={project.description}
-                          category={project.category}
-                          color={project.color}
-                          project_icon={project.project_icon}
-                          progress={project.progress}
-                          role={project.role}
-                          status={project.status}
-                          memberCount={project.memberCount}
-                          members={(project as any).members}
-                        />
-                      ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Shared Projects Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Shared Projects</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {projects.filter(p => p.owner_id !== sessionUserId).length}
-                  </span>
-                </div>
-
-                {projects.filter(p => p.owner_id !== sessionUserId).length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed rounded-lg bg-muted/20">
-                    <p className="text-muted-foreground">No shared projects yet</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {projects
-                      .filter(p => p.owner_id !== sessionUserId)
-                      .map(project => (
-                        <ProjectCard
-                          key={project.id}
-                          id={project.id}
-                          title={project.title}
-                          description={project.description}
-                          category={project.category}
-                          color={project.color}
-                          project_icon={project.project_icon}
-                          progress={project.progress}
-                          role={project.role}
-                          status={project.status}
-                          memberCount={project.memberCount}
-                          members={(project as any).members}
-                          membershipStatus={project.membershipStatus}
-                          onRespond={(accept) => handleInvitationResponse(project.id, accept)}
-                        />
-                      ))}
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            {/* Calendar - Takes 1 column on large screens */}
-            <div className="lg:col-span-1">
-              <CalendarWidget events={calendarEvents} />
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+    <DashboardClient
+      displayName={displayName}
+      initialProjects={projects as any}
+      initialWorkGroups={workGroups}
+      sessionUserId={userId}
+    />
   )
 }

@@ -35,8 +35,26 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protected routes logic could go here
-    // For now, we just ensure the session is refreshed if valid
+    // Protected routes logic
+    const isAuthRoute = request.nextUrl.pathname.startsWith('/(authenticated)') ||
+        request.nextUrl.pathname.startsWith('/dashboard') ||
+        request.nextUrl.pathname.startsWith('/projects') ||
+        request.nextUrl.pathname.startsWith('/profile')
+
+    if (!user && isAuthRoute) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        // Preserve original destination
+        url.searchParams.set('redirectedFrom', request.nextUrl.pathname)
+        return NextResponse.redirect(url)
+    }
+
+    // Redirect logged in users away from login/register if they have a session
+    if (user && (request.nextUrl.pathname === '/login')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+    }
 
     return response
 }

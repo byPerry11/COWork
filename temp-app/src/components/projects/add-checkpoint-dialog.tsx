@@ -41,7 +41,7 @@ const checkpointSchema = z.object({
 
 interface AddCheckpointDialogProps {
   projectId: string
-  onSuccess: () => void
+  onSuccess?: () => void
 }
 
 export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialogProps) {
@@ -117,7 +117,7 @@ export function AddCheckpointDialog({ projectId, onSuccess }: AddCheckpointDialo
       setOpen(false)
       form.reset()
       setFile(null)
-      onSuccess()
+      if (onSuccess) onSuccess()
     } catch (error) {
       console.error('Unexpected error:', error)
       toast.error('Error inesperado')
