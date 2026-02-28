@@ -29,32 +29,35 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // IMPORTANT: Avoid writing any logic between createServerClient and
-    // supabase.auth.getUser().
-    // We add a short timeout to prevent infinite loading if Supabase is unreachable
-    const userPromise = supabase.auth.getUser()
-    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
-        setTimeout(() => resolve({ data: { user: null } }), 3000)
+    // Protected routes logic - all routes inside (authenticated) group
+    const protectedRoutes = [
+        '/dashboard',
+        '/projects',
+        '/profile',
+        '/chats',
+        '/groups',
+        '/tools',
+        '/users'
+    ]
+    
+    const isAuthRoute = protectedRoutes.some(route => 
+        request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`)
     )
 
-    const { data: { user } } = await Promise.race([userPromise, timeoutPromise]) as any
-
-    // Protected routes logic
-    const isAuthRoute = request.nextUrl.pathname.startsWith('/(authenticated)') ||
-        request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/projects') ||
-        request.nextUrl.pathname.startsWith('/profile')
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user && isAuthRoute) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
-        // Preserve original destination
         url.searchParams.set('redirectedFrom', request.nextUrl.pathname)
         return NextResponse.redirect(url)
     }
 
-    // Redirect logged in users away from login/register if they have a session
-    if (user && (request.nextUrl.pathname === '/login')) {
+    // Redirect logged in users away from login/auth routes
+    const isAuthPage = request.nextUrl.pathname === '/login' || 
+                       request.nextUrl.pathname.startsWith('/auth/')
+    
+    if (user && isAuthPage) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

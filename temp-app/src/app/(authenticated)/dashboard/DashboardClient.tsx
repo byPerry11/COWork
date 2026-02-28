@@ -63,7 +63,7 @@ export function DashboardClient({
                     date: new Date(project.end_date),
                     color: project.color || '#6366f1',
                     type: 'project-deadline',
-                    link: `/dashboard/projects/${project.id}`
+                    link: `/projects/${project.id}`
                 })
             }
         })
