@@ -44,7 +44,13 @@ export async function middleware(request: NextRequest) {
         request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`)
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    // We add a short timeout to prevent infinite loading if Supabase is unreachable
+    const userPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+        setTimeout(() => resolve({ data: { user: null } }), 5000)
+    )
+
+    const { data: { user } } = await Promise.race([userPromise, timeoutPromise]) as any
 
     if (!user && isAuthRoute) {
         const url = request.nextUrl.clone()

@@ -99,12 +99,7 @@ export default function LoginPage() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
-          setTimeout(() => resolve({ data: { session: null } }), 3000)
-        )
-
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any
+        const { data: { session } } = await supabase.auth.getSession()
 
         if (session) {
           router.push("/dashboard")
@@ -114,6 +109,9 @@ export default function LoginPage() {
       } catch (error) {
         console.error("Session check error:", error)
         setCheckingSession(false)
+      } finally {
+          // Safety fallback to ensure UI is never stuck
+          setTimeout(() => setCheckingSession(false), 2000)
       }
     }
     checkSession()
