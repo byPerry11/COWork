@@ -256,6 +256,18 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
         }
     }, [isRunning, timeLeft])
 
+    const pauseSession = () => setIsRunning(false)
+    const resumeSession = () => setIsRunning(true)
+    const resetSession = () => {
+        setIsRunning(false)
+        if (phase === 'work') setTimeLeft(settings.workDuration)
+        else if (phase === 'shortBreak') setTimeLeft(settings.shortBreakDuration)
+        else setTimeLeft(settings.longBreakDuration)
+    }
+    const skipPhase = async () => {
+        await transitionPhase()
+    }
+
     const value: PomodoroContextType = {
         phase,
         timeLeft,
