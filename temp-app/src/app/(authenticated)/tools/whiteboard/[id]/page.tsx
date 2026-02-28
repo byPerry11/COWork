@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { WhiteboardCanvas } from "@/components/whiteboard-canvas"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 export default function WhiteboardPage() {
     const params = useParams()
@@ -70,27 +71,43 @@ export default function WhiteboardPage() {
     if (!userId) return null
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50">
-            <header className="bg-white border-b px-4 py-3 flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.push("/tools")}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                    <h1 className="font-bold text-lg">{boardTitle}</h1>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            Live
-                        </span>
+        <div className="flex flex-col h-screen bg-gray-100 dark:bg-background/95">
+            <header className="bg-slate-900 text-white border-b border-slate-700 px-4 py-3 flex items-center justify-between shadow-md z-20">
+                <div className="flex items-center gap-4">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => router.push("/dashboard")}
+                        className="text-white hover:bg-slate-800"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="font-bold text-lg leading-none">{boardTitle}</h1>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                Colaborativo • En vivo
+                            </span>
+                        </div>
                     </div>
                 </div>
+                
+                <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-slate-300 border-slate-700">
+                        {userId.slice(0, 5)}...
+                    </Badge>
+                </div>
             </header>
-            <div className="flex-1 p-4 overflow-hidden">
-                <WhiteboardCanvas
-                    whiteboardId={id}
-                    userId={userId}
-                    initialStrokes={initialStrokes}
-                />
+            <div className="flex-1 p-2 md:p-4 overflow-hidden relative">
+                <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]" />
+                <div className="relative h-full w-full rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 bg-white">
+                    <WhiteboardCanvas
+                        whiteboardId={id}
+                        userId={userId}
+                        initialStrokes={initialStrokes}
+                    />
+                </div>
             </div>
         </div>
     )

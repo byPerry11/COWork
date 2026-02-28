@@ -7,6 +7,7 @@ import { ToolsMenu } from "@/components/layout/tools-menu"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
+import { useState } from "react"
 
 interface ToolsWidgetProps {
     userId: string
@@ -14,6 +15,13 @@ interface ToolsWidgetProps {
 
 export function ToolsWidget({ userId }: ToolsWidgetProps) {
     const router = useRouter()
+    const [isToolsOpen, setIsToolsOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState("pomodoro")
+
+    const handleOpenTool = (tab: string) => {
+        setActiveTab(tab)
+        setIsToolsOpen(true)
+    }
 
     const handleCreateWhiteboard = async () => {
         try {
@@ -25,7 +33,7 @@ export function ToolsWidget({ userId }: ToolsWidgetProps) {
 
             const { data, error } = await supabase
                 .from('whiteboards')
-                .insert({ owner_id: session.user.id })
+                .insert({ owner_id: session.user.id, title: "Nuevo Whiteboard" })
                 .select()
                 .single()
 
@@ -41,37 +49,50 @@ export function ToolsWidget({ userId }: ToolsWidgetProps) {
     }
 
     return (
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Wrench className="h-5 w-5 text-primary" />
-                    Quick Tools
-                </CardTitle>
-                <ToolsMenu userId={userId} />
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3">
-                <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col gap-2 items-center justify-center border-dashed hover:border-primary hover:bg-primary/5 transition-colors"
-                    onClick={() => {
-                        // Forzar click en el botón del ToolsMenu que está arriba si queremos abrir el sheet
-                        // O simplemente redirigir a /tools si esa página está bien
-                        router.push("/tools")
-                    }}
-                >
-                    <Timer className="h-6 w-6 text-orange-500" />
-                    <span className="text-xs font-medium">Pomodoro</span>
-                </Button>
-                
-                <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col gap-2 items-center justify-center border-dashed hover:border-primary hover:bg-primary/5 transition-colors"
-                    onClick={handleCreateWhiteboard}
-                >
-                    <PenTool className="h-6 w-6 text-blue-500" />
-                    <span className="text-xs font-medium">Whiteboard</span>
-                </Button>
-            </CardContent>
-        </Card>
+        <>
+            <ToolsMenu 
+                userId={userId} 
+                open={isToolsOpen} 
+                onOpenChange={setIsToolsOpen} 
+                defaultTab={activeTab}
+            />
+            
+            <Card className="shadow-sm hover:shadow-md transition-shadow overflow-hidden border-primary/20 bg-primary/5">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between bg-primary/10">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
+                        <Wrench className="h-4 w-4" />
+                        Quick Tools
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 grid grid-cols-2 gap-2">
+                    <Button 
+                        variant="ghost" 
+                        className="h-auto py-3 flex flex-col gap-1 items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
+                        onClick={() => handleOpenTool("pomodoro")}
+                    >
+                        <Timer className="h-5 w-5 text-orange-500" />
+                        <span className="text-[10px] font-bold uppercase tracking-tighter">Timer</span>
+                    </Button>
+                    
+                    <Button 
+                        variant="ghost" 
+                        className="h-auto py-3 flex flex-col gap-1 items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
+                        onClick={handleCreateWhiteboard}
+                    >
+                        <PenTool className="h-5 w-5 text-blue-500" />
+                        <span className="text-[10px] font-bold uppercase tracking-tighter">Canvas</span>
+                    </Button>
+
+                    <Button 
+                        variant="ghost" 
+                        className="h-auto py-3 flex flex-col gap-1 items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all col-span-2"
+                        onClick={() => handleOpenTool("checkpoints")}
+                    >
+                        <Target className="h-5 w-5 text-green-500" />
+                        <span className="text-[10px] font-bold uppercase tracking-tighter">Metas de Proyectos</span>
+                    </Button>
+                </CardContent>
+            </Card>
+        </>
     )
 }

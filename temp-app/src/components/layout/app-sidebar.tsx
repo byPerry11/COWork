@@ -53,7 +53,6 @@ export function AppSidebar() {
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard", label: "Projects", icon: FolderKanban },
-    { href: "/tools", label: "Tools", icon: Wrench },
     { href: "/profile", label: "Profile", icon: User },
     { href: "#", label: "Settings", icon: Settings },
   ]
