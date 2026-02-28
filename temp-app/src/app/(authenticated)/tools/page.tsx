@@ -2,17 +2,28 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Clock, PenTool } from "lucide-react" // PenTool como icono para pizarra
+import { Clock, PenTool, ChevronLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
+import { useState, useEffect } from "react"
+import { PomodoroTimer } from "@/components/layout/pomodoro-timer"
 
 export default function ToolsPage() {
     const router = useRouter()
+    const [activeTool, setActiveTool] = useState<string | null>(null)
+    const [userId, setUserId] = useState<string | null>(null)
+
+    useEffect(() => {
+        const getSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) setUserId(session.user.id)
+        }
+        getSession()
+    }, [])
 
     const handleCreateWhiteboard = async () => {
         try {
-            // Get current user session
             const { data: { session } } = await supabase.auth.getSession()
             if (!session?.user) {
                 toast.error("You must be logged in to create a whiteboard")
@@ -40,13 +51,39 @@ export default function ToolsPage() {
         }
     }
 
+    if (activeTool === "pomodoro" && userId) {
+        return (
+            <div className="flex flex-col h-full bg-gray-50 dark:bg-background p-4 md:p-8">
+                <div className="max-w-3xl mx-auto w-full space-y-6">
+                    <Button 
+                        variant="ghost" 
+                        onClick={() => setActiveTool(null)}
+                        className="flex items-center gap-2"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Back to Tools
+                    </Button>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Pomodoro Timer</CardTitle>
+                            <CardDescription>Stay focused and manage your time effectively.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <PomodoroTimer userId={userId} />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
     const tools = [
         {
             id: "pomodoro",
             title: "Pomodoro Timer",
             description: "Stay focused with the Pomodoro technique.",
             icon: Clock,
-            action: () => router.push("/profile"), // Por ahora lleva al perfil donde está el timer, o idealmente mover el timer a /tools/pomodoro
+            action: () => setActiveTool("pomodoro"),
             buttonText: "Open Timer",
             status: "Available"
         },

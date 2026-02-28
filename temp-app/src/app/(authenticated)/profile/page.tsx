@@ -256,7 +256,6 @@ export default function ProfilePage() {
 
                             {/* Edit & Logout Buttons - At Bottom */}
                             <div className="flex gap-2 mt-6 pt-6 border-t justify-center md:justify-end">
-                                <ToolsMenu userId={userId} />
                                 <Button
                                     variant="outline"
                                     size="sm"

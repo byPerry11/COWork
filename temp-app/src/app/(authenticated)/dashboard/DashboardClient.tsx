@@ -5,6 +5,7 @@ import { ProjectCard } from "@/components/projects/project-card"
 import { WorkGroupCard } from "@/components/work-group-card"
 import { CreateGroupDialog } from "@/components/create-group-dialog"
 import { CalendarWidget } from "@/components/calendar-widget"
+import { ToolsWidget } from "@/components/tools-widget"
 import { GlobalSearchBar } from "@/components/layout/global-search-bar"
 import { getRandomQuote } from "@/lib/motivational-quotes"
 
@@ -210,8 +211,9 @@ export function DashboardClient({
 
                         </div>
 
-                        {/* Calendar */}
-                        <div className="lg:col-span-1">
+                        {/* Calendar & Tools Column */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <ToolsWidget userId={sessionUserId} />
                             <CalendarWidget events={calendarEvents} />
                         </div>
                     </div>
