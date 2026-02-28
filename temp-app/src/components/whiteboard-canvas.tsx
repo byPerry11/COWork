@@ -92,7 +92,8 @@ export function WhiteboardCanvas({ whiteboardId, userId, initialStrokes = [] }: 
     }, [whiteboardId])
 
     const handleMouseDown = (e: React.MouseEvent | React.TouchEvent, transform: any) => {
-        if (mode !== 'draw') return
+        // Ignore right click for drawing (button 2)
+        if (mode !== 'draw' || ('button' in e && e.button === 2)) return
 
         const point = getSVGPoint(e, transform)
         setIsDrawing(true)
@@ -100,13 +101,13 @@ export function WhiteboardCanvas({ whiteboardId, userId, initialStrokes = [] }: 
     }
 
     const handleMouseMove = (e: React.MouseEvent | React.TouchEvent, transform: any) => {
-        if (!isDrawing || mode !== 'draw') return
+        if (!isDrawing || mode !== 'draw' || ('button' in e && e.button === 2)) return
 
         const point = getSVGPoint(e, transform)
         setCurrentStroke(prev => [...prev, point])
     }
 
-    const handleMouseUp = async () => {
+    const handleMouseUp = async (e?: React.MouseEvent | React.TouchEvent) => {
         if (!isDrawing || mode !== 'draw') return
         setIsDrawing(false)
 
