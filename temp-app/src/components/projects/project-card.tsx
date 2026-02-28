@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import Link from "next/link"
+import { memo } from "react"
 import { ENGINEERING_CATEGORIES } from "@/lib/project-constants"
 import { AvatarStack } from "@/components/avatar-stack"
 
@@ -23,7 +24,7 @@ interface ProjectCardProps {
     onRespond?: (accept: boolean) => void
 }
 
-export function ProjectCard({
+export const ProjectCard = memo(({
     id,
     title,
     description,
@@ -37,7 +38,7 @@ export function ProjectCard({
     members = [],
     membershipStatus = "active",
     onRespond
-}: ProjectCardProps) {
+}: ProjectCardProps) => {
     const isPending = membershipStatus === "pending"
     const roleColors = {
         admin: "bg-purple-500",
@@ -185,4 +186,6 @@ export function ProjectCard({
             </Card>
         </CardWrapper>
     )
-}
+})
+
+ProjectCard.displayName = "ProjectCard"

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Folder, Users, ArrowRight } from "lucide-react"
+import { memo } from "react"
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +16,7 @@ interface WorkGroupCardProps {
     isOwner?: boolean
 }
 
-export function WorkGroupCard({ id, name, description, memberCount = 0, isOwner }: WorkGroupCardProps) {
+export const WorkGroupCard = memo(({ id, name, description, memberCount = 0, isOwner }: WorkGroupCardProps) => {
     return (
         <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
@@ -48,4 +49,6 @@ export function WorkGroupCard({ id, name, description, memberCount = 0, isOwner 
             </CardFooter>
         </Card>
     )
-}
+})
+
+WorkGroupCard.displayName = "WorkGroupCard"

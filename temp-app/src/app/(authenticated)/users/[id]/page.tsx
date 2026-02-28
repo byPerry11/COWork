@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProfileHeader } from "@/components/profile-header"
-import { ProfileAchievements } from "@/components/profile-achievements"
+import { AchievementsDisplay } from "@/components/achievements-display"
 import { ProfileProjects } from "@/components/profile-projects"
 
 export default function UserProfilePage() {
@@ -68,7 +68,7 @@ export default function UserProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2">
-                    <ProfileAchievements userId={userId} />
+                    <AchievementsDisplay userId={userId} />
                 </div>
                 <div className="md:col-span-1">
                     <ProfileProjects userId={userId} />

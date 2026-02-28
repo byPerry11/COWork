@@ -1,5 +1,6 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,9 +12,17 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Wrench, Timer, Target } from "lucide-react"
-import { PomodoroTimer } from "@/components/layout/pomodoro-timer"
-import { ProjectCheckpointsView } from "@/components/projects/project-checkpoints-view"
+import { Wrench, Timer, Target, Loader2 } from "lucide-react"
+
+// Carga dinámica para componentes pesados
+const PomodoroTimer = dynamic(() => import("@/components/layout/pomodoro-timer").then(mod => mod.PomodoroTimer), {
+    ssr: false,
+    loading: () => <div className="flex h-40 items-center justify-center bg-muted/20 rounded-lg animate-pulse"><Loader2 className="h-6 w-6 animate-spin text-primary/30" /></div>
+})
+const ProjectCheckpointsView = dynamic(() => import("@/components/projects/project-checkpoints-view").then(mod => mod.ProjectCheckpointsView), {
+    ssr: false,
+    loading: () => <div className="flex h-40 items-center justify-center bg-muted/20 rounded-lg animate-pulse"><Loader2 className="h-6 w-6 animate-spin text-primary/30" /></div>
+})
 
 interface ToolsMenuProps {
     userId: string

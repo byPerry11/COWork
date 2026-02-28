@@ -1,12 +1,21 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { WhiteboardCanvas } from "@/components/whiteboard-canvas"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+
+const WhiteboardCanvas = dynamic(() => import("@/components/whiteboard-canvas").then(mod => mod.WhiteboardCanvas), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center h-full w-full bg-muted/20 animate-pulse">
+            <Loader2 className="h-8 w-8 animate-spin text-primary/30" />
+        </div>
+    )
+})
 
 export default function WhiteboardPage() {
     const params = useParams()
