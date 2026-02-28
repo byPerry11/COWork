@@ -290,12 +290,12 @@ export function WhiteboardCanvas({ whiteboardId, userId, initialStrokes = [] }: 
                             <svg
                                 className="w-full h-full"
                                 viewBox="0 0 5000 5000"
-                                onMouseDown={(e) => handleMouseDown(e, transform.state)}
-                                onMouseMove={(e) => handleMouseMove(e, transform.state)}
+                                onMouseDown={(e) => handleMouseDown(e, transform.instance.transformState)}
+                                onMouseMove={(e) => handleMouseMove(e, transform.instance.transformState)}
                                 onMouseUp={handleMouseUp}
                                 onMouseLeave={handleMouseUp}
-                                onTouchStart={(e) => handleMouseDown(e, transform.state)}
-                                onTouchMove={(e) => handleMouseMove(e, transform.state)}
+                                onTouchStart={(e) => handleMouseDown(e, transform.instance.transformState)}
+                                onTouchMove={(e) => handleMouseMove(e, transform.instance.transformState)}
                                 onTouchEnd={handleMouseUp}
                                 style={{
                                     width: '5000px',
