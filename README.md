@@ -1,4 +1,4 @@
-# TPV-Cowork 🚀
+# COWork 🚀
 
 **Sistema de Gestión de Proyectos Colaborativos con Gamificación**
 
