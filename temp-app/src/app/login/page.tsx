@@ -157,7 +157,14 @@ export default function LoginPage() {
           toast.success("Welcome back!", {
             description: "You have successfully signed in.",
           })
-          router.push("/dashboard")
+          
+          // Force a router refresh to sync cookies for middleware
+          router.refresh()
+          
+          // Redirect to dashboard with a slight delay so user can read the toast
+          setTimeout(() => {
+            router.push("/dashboard")
+          }, 500)
         }
       }
 
