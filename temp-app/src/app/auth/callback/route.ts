@@ -36,8 +36,30 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!error) {
+    if (!error && data.user) {
       console.log('Auth Callback: Session exchanged successfully for user:', data.user?.email)
+      
+      // Ensure profile exists after OAuth login
+      const { user } = data
+      const metadata = user.user_metadata
+      
+      try {
+        // We use upsert to create or update the profile without failing if it exists
+        // This is safe even if a database trigger already handles this
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          username: metadata.username || user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`,
+          display_name: metadata.display_name || metadata.full_name || metadata.name || null,
+          avatar_url: metadata.avatar_url || null,
+          updated_at: new Date().toISOString(),
+        }, { 
+          onConflict: 'id',
+          ignoreDuplicates: true // Only insert if not exists to preserve existing custom data
+        })
+      } catch (profileError) {
+        console.error('Auth Callback: Error ensuring profile exists:', profileError)
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     } else {
       console.error('Auth Callback: Error exchanging code for session:', error)
