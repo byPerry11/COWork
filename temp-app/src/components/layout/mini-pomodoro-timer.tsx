@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react"
 import { usePomodoro } from "@/contexts/pomodoro-context"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, X, Maximize2, Brain, Coffee, Moon, GripVertical } from "lucide-react"
+import { Play, Pause, X, Maximize2, Brain, Coffee, Moon, GripVertical, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence, useDragControls } from "framer-motion"
 
 export function MiniPomodoroTimer() {
     const {
@@ -21,39 +22,7 @@ export function MiniPomodoroTimer() {
 
     const [isExpanded, setIsExpanded] = useState(false)
     const [isDismissed, setIsDismissed] = useState(false)
-
-    // Dragging state
-    const [position, setPosition] = useState({ x: 0, y: 0 }) // Will be set on mount
-    const [isDragging, setIsDragging] = useState(false)
-    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-    const timerRef = useRef<HTMLDivElement>(null)
-    const isInitialized = useRef(false)
-
-    // Initial position (bottom right)
-    useEffect(() => {
-        if (!isInitialized.current && typeof window !== 'undefined') {
-            setPosition({
-                x: window.innerWidth - 320, // Approximate width + padding
-                y: window.innerHeight - 150
-            })
-            isInitialized.current = true
-        }
-    }, [])
-
-    // Handle resizing to keep in bounds
-    useEffect(() => {
-        const handleResize = () => {
-            if (timerRef.current) {
-                const { innerWidth, innerHeight } = window
-                setPosition(prev => ({
-                    x: Math.min(prev.x, innerWidth - timerRef.current!.offsetWidth),
-                    y: Math.min(prev.y, innerHeight - timerRef.current!.offsetHeight)
-                }))
-            }
-        }
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
-    }, [])
+    const constraintsRef = useRef(null)
 
     // No mostrar si no hay sesión activa o se ha descartado
     if (!currentSessionId || isDismissed) return null
@@ -68,29 +37,29 @@ export function MiniPomodoroTimer() {
         switch (phase) {
             case 'work':
                 return {
-                    label: 'Trabajo',
+                    label: 'Focus',
                     icon: Brain,
-                    color: 'text-blue-500',
-                    bgColor: 'bg-blue-500',
-                    ringColor: 'ring-blue-500/30',
+                    color: 'text-indigo-500',
+                    bgColor: 'bg-indigo-500',
+                    ringColor: 'ring-indigo-500/20',
                     total: settings.workDuration
                 }
             case 'shortBreak':
                 return {
-                    label: 'Descanso',
+                    label: 'Break',
                     icon: Coffee,
-                    color: 'text-green-500',
-                    bgColor: 'bg-green-500',
-                    ringColor: 'ring-green-500/30',
+                    color: 'text-emerald-500',
+                    bgColor: 'bg-emerald-500',
+                    ringColor: 'ring-emerald-500/20',
                     total: settings.shortBreakDuration
                 }
             case 'longBreak':
                 return {
-                    label: 'Descanso Largo',
+                    label: 'Rest',
                     icon: Moon,
-                    color: 'text-purple-500',
-                    bgColor: 'bg-purple-500',
-                    ringColor: 'ring-purple-500/30',
+                    color: 'text-amber-500',
+                    bgColor: 'bg-amber-500',
+                    ringColor: 'ring-amber-500/20',
                     total: settings.longBreakDuration
                 }
         }
@@ -100,262 +69,136 @@ export function MiniPomodoroTimer() {
     const PhaseIcon = phaseInfo.icon
     const progress = ((phaseInfo.total - timeLeft) / phaseInfo.total) * 100
 
-    const handleDismiss = () => {
-        setIsDismissed(true)
-        resetSession()
-    }
-
-    // Drag handlers
-    const handlePointerDown = (e: React.PointerEvent) => {
-        // Prevent dragging if clicking buttons
-        if ((e.target as HTMLElement).closest('button')) return
-
-        setIsDragging(true)
-        const rect = timerRef.current?.getBoundingClientRect()
-        if (rect) {
-            setDragOffset({
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            })
-        }
-        e.preventDefault() // Prevent selection
-    }
-
-    const handlePointerMove = (e: PointerEvent) => {
-        if (isDragging) {
-            setPosition({
-                x: e.clientX - dragOffset.x,
-                y: e.clientY - dragOffset.y
-            })
-        }
-    }
-
-    const handlePointerUp = () => {
-        if (isDragging) {
-            setIsDragging(false)
-            // Snap to edges
-            const { innerWidth } = window
-            const widgetWidth = timerRef.current?.offsetWidth || 0
-            const threshold = innerWidth / 2
-
-            let snapX = 0
-
-            // Snap to Right or Left
-            if (position.x + widgetWidth / 2 > threshold) {
-                snapX = innerWidth - widgetWidth - 20 // 20px padding right
-            } else {
-                snapX = 20 // 20px padding left
-            }
-
-            // Keep Y in bounds
-            const maxY = window.innerHeight - (timerRef.current?.offsetHeight || 0) - 20
-            const snapY = Math.max(20, Math.min(position.y, maxY))
-
-            setPosition({ x: snapX, y: snapY })
-        }
-    }
-
-    // Global drag listeners
-    useEffect(() => {
-        if (isDragging) {
-            window.addEventListener('pointermove', handlePointerMove)
-            window.addEventListener('pointerup', handlePointerUp)
-        } else {
-            window.removeEventListener('pointermove', handlePointerMove)
-            window.removeEventListener('pointerup', handlePointerUp)
-        }
-        return () => {
-            window.removeEventListener('pointermove', handlePointerMove)
-            window.removeEventListener('pointerup', handlePointerUp)
-        }
-    }, [isDragging, dragOffset]) // eslint-disable-line react-hooks/exhaustive-deps
-
-
     return (
-        <div
-            ref={timerRef}
-            style={{
-                left: position.x,
-                top: position.y,
-                touchAction: 'none' // Important for dragging on mobile
-            }}
-            onPointerDown={handlePointerDown}
-            className={cn(
-                "fixed z-[100] transition-shadow duration-300 ease-in-out cursor-grab active:cursor-grabbing",
-                // Remove existing positioning classes since we use inline styles
-                "transition-all duration-300", // Smooth snapping when not dragging
-                isDragging && "transition-none", // Responsive dragging
-                isExpanded ? "w-72" : "w-auto"
-            )}
+        <motion.div
+            drag
+            dragMomentum={false}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="fixed bottom-24 right-6 z-[100] touch-none"
         >
             <div
                 className={cn(
-                    "bg-card/95 backdrop-blur-lg border shadow-2xl rounded-2xl overflow-hidden",
-                    "ring-2",
+                    "bg-background/95 backdrop-blur-md border shadow-xl rounded-2xl overflow-hidden transition-all duration-300",
+                    "ring-1",
                     phaseInfo.ringColor,
-                    isRunning && "animate-pulse-subtle"
+                    isExpanded ? "w-64" : "w-auto"
                 )}
             >
-                {/* Mini version (collapsed) */}
-                {!isExpanded && (
-                    <div
-                        className="flex items-center gap-3 p-3 transition-colors relative group"
-                    >
-                        {/* Drag Handle Overlay */}
-                        <div className="absolute inset-0 bg-transparent" />
-
-                        {/* Expand Button (Clickable area needs to be explicit) */}
-                        <div
-                            className="cursor-pointer z-10"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsExpanded(true);
-                            }}
+                <AnimatePresence mode="wait">
+                    {!isExpanded ? (
+                        <motion.div
+                            key="collapsed"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center gap-3 p-2 pl-3"
                         >
-                            {/* Circular progress indicator */}
-                            <div className="relative">
-                                <svg className="w-12 h-12 -rotate-90 pointer-events-none">
-                                    <circle
-                                        cx="24"
-                                        cy="24"
-                                        r="20"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                        fill="none"
-                                        className="text-muted"
-                                    />
-                                    <circle
-                                        cx="24"
-                                        cy="24"
-                                        r="20"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                        fill="none"
-                                        strokeDasharray={125.6}
-                                        strokeDashoffset={125.6 - (progress / 100) * 125.6}
-                                        className={phaseInfo.color}
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <PhaseIcon className={cn("h-5 w-5", phaseInfo.color)} />
+                            <div 
+                                onClick={() => setIsExpanded(true)}
+                                className="flex items-center gap-3 cursor-pointer group"
+                            >
+                                <div className="relative h-10 w-10 flex-shrink-0">
+                                    <svg className="w-full h-full -rotate-90">
+                                        <circle
+                                            cx="20" cy="20" r="18"
+                                            stroke="currentColor" strokeWidth="3" fill="none"
+                                            className="text-muted/30"
+                                        />
+                                        <motion.circle
+                                            cx="20" cy="20" r="18"
+                                            stroke="currentColor" strokeWidth="3" fill="none"
+                                            strokeDasharray={113}
+                                            animate={{ strokeDashoffset: 113 - (progress / 100) * 113 }}
+                                            className={phaseInfo.color}
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <PhaseIcon className={cn("h-4 w-4", phaseInfo.color)} />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col pr-2">
+                                    <span className="text-sm font-bold tabular-nums leading-none">
+                                        {formatTime(timeLeft)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                        Session {sessionCount + 1}
+                                    </span>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Time & Drag trigger */}
-                        <div className="flex-1 select-none">
-                            <div className="text-xl font-bold tabular-nums pointer-events-none">
-                                {formatTime(timeLeft)}
+                            <div className="flex items-center border-l pl-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                    onClick={() => isRunning ? pauseSession() : resumeSession()}
+                                >
+                                    {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                </Button>
                             </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
-                                🍅 {sessionCount}
-                            </div>
-                        </div>
-
-                        {/* Quick controls (z-10 to be clickable) */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 z-10 relative"
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                isRunning ? pauseSession() : resumeSession()
-                            }}
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="expanded"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="p-4 pt-3 space-y-3"
                         >
-                            {isRunning ? (
-                                <Pause className="h-4 w-4" />
-                            ) : (
-                                <Play className="h-4 w-4" />
-                            )}
-                        </Button>
-                    </div>
-                )}
-
-                {/* Expanded version */}
-                {isExpanded && (
-                    <div className="p-4 space-y-4">
-                        {/* Header */}
-                        <div className="flex items-center justify-between cursor-default">
-                            <div className="flex items-center gap-2">
-                                <GripVertical className="h-4 w-4 text-muted-foreground/50 mr-1" />
-                                <div className={cn("p-1.5 rounded-full", phaseInfo.bgColor + "/10")}>
+                            <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
                                     <PhaseIcon className={cn("h-4 w-4", phaseInfo.color)} />
+                                    <span className={cn("text-xs font-bold uppercase tracking-wider", phaseInfo.color)}>
+                                        {phaseInfo.label}
+                                    </span>
                                 </div>
-                                <span className={cn("text-sm font-medium", phaseInfo.color)}>
-                                    {phaseInfo.label}
+                                <div className="flex gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => setIsExpanded(false)}
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                <span className="text-4xl font-black tabular-nums tracking-tighter">
+                                    {formatTime(timeLeft)}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-1 z-10 relative">
+
+                            <div className="flex items-center justify-center gap-2">
                                 <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-8 text-xs px-3"
+                                    onClick={() => resetSession()}
                                 >
-                                    <Maximize2 className="h-3.5 w-3.5 rotate-180" />
+                                    Reset
                                 </Button>
                                 <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                    onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+                                    size="sm"
+                                    className={cn("h-8 text-xs px-4 font-bold shadow-sm", phaseInfo.bgColor)}
+                                    onClick={() => isRunning ? pauseSession() : resumeSession()}
                                 >
-                                    <X className="h-3.5 w-3.5" />
+                                    {isRunning ? "PAUSE" : "START"}
                                 </Button>
                             </div>
-                        </div>
-
-                        {/* Timer display */}
-                        <div className="text-center select-none cursor-default">
-                            <div className="text-5xl font-bold tabular-nums tracking-tight">
-                                {formatTime(timeLeft)}
+                            
+                            <div className="flex justify-between items-center text-[10px] text-muted-foreground font-medium pt-1">
+                                <span>Completed: {sessionCount}</span>
+                                <span className="opacity-50">Next: {phase === 'work' ? 'Break' : 'Focus'}</span>
                             </div>
-                        </div>
-
-                        {/* Progress bar */}
-                        <div className="w-full bg-muted rounded-full h-1.5 cursor-default">
-                            <div
-                                className={cn("h-1.5 rounded-full transition-all", phaseInfo.bgColor)}
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-
-                        {/* Controls (z-10) */}
-                        <div className="flex items-center justify-center gap-2 z-10 relative">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => { e.stopPropagation(); resetSession(); }}
-                            >
-                                Reiniciar
-                            </Button>
-                            <Button
-                                size="sm"
-                                className="min-w-[100px]"
-                                onClick={(e) => { e.stopPropagation(); isRunning ? pauseSession() : resumeSession(); }}
-                            >
-                                {isRunning ? (
-                                    <>
-                                        <Pause className="h-4 w-4 mr-1.5" />
-                                        Pausar
-                                    </>
-                                ) : (
-                                    <>
-                                        <Play className="h-4 w-4 mr-1.5" />
-                                        Continuar
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-
-                        {/* Session count */}
-                        <div className="text-center text-xs text-muted-foreground cursor-default">
-                            Sesiones hoy: 🍅 {sessionCount}
-                        </div>
-                    </div>
-                )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     )
 }
