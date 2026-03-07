@@ -4,8 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, Plus, CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
+import { Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -37,9 +36,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { DatePickerField } from "@/components/ui/date-picker-field"
 import { ColorPicker } from "@/components/color-picker"
 import { EmojiPicker } from "@/components/emoji-picker"
 import { UserMultiSelect } from "@/components/user-multi-select"
@@ -245,36 +242,13 @@ export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDia
               control={form.control}
               name="start_date"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Start Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <FormItem>
+                  <DatePickerField
+                    label="Start Date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Pick a start date"
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -285,39 +259,14 @@ export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDia
               control={form.control}
               name="end_date"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>End Date (Optional)</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date (optional)</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Expected completion date
-                  </FormDescription>
+                <FormItem>
+                  <DatePickerField
+                    label="End Date (Optional)"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Pick an end date"
+                    description="Expected completion date"
+                  />
                   <FormMessage />
                 </FormItem>
               )}
