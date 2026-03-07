@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   description: APP_DESCRIPTION,
   icons: {
     icon: "/cowork-logo-dark.png",
+    apple: "/icons/icon-192x192.png",
   },
   appleWebApp: {
     capable: true,
