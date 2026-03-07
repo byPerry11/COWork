@@ -57,39 +57,39 @@ export function ToolsWidget({ userId }: ToolsWidgetProps) {
                 defaultTab={activeTab}
             />
             
-            <Card className="shadow-sm hover:shadow-md transition-shadow overflow-hidden border-primary/20 bg-primary/5">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between bg-primary/10">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
-                        <Wrench className="h-4 w-4" />
-                        Quick Tools
-                    </CardTitle>
+            <Card className="shadow-sm hover:shadow-md transition-shadow overflow-hidden border-primary/20 bg-primary/5 w-fit">
+                <CardHeader className="p-2 flex flex-row items-center justify-center bg-primary/10">
+                    <Wrench className="h-4 w-4 text-primary" />
                 </CardHeader>
-                <CardContent className="p-3 grid grid-cols-2 gap-2">
+                <CardContent className="p-2 flex flex-col gap-2">
                     <Button 
                         variant="ghost" 
-                        className="h-auto py-3 flex flex-col gap-1 items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
+                        size="icon"
+                        className="h-9 w-9 flex items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
                         onClick={() => handleOpenTool("pomodoro")}
+                        title="Timer"
                     >
                         <Timer className="h-5 w-5 text-orange-500" />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">Timer</span>
                     </Button>
                     
                     <Button 
                         variant="ghost" 
-                        className="h-auto py-3 flex flex-col gap-1 items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
+                        size="icon"
+                        className="h-9 w-9 flex items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
                         onClick={handleCreateWhiteboard}
+                        title="Canvas"
                     >
                         <PenTool className="h-5 w-5 text-blue-500" />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">Canvas</span>
                     </Button>
 
                     <Button 
                         variant="ghost" 
-                        className="h-auto py-3 flex flex-col gap-1 items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all col-span-2"
+                        size="icon"
+                        className="h-9 w-9 flex items-center justify-center bg-background hover:bg-primary/10 border border-border transition-all"
                         onClick={() => handleOpenTool("checkpoints")}
+                        title="Metas de Proyectos"
                     >
                         <Target className="h-5 w-5 text-green-500" />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">Metas de Proyectos</span>
                     </Button>
                 </CardContent>
             </Card>
