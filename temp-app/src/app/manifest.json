@@ -1,0 +1,25 @@
+{
+  "name": "COWork",
+  "short_name": "COWork",
+  "description": "Collaborative Project Management",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["productivity", "business"]
+}
