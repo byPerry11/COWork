@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { ProjectCard } from "@/components/projects/project-card"
 import { WorkGroupCard } from "@/components/work-group-card"
-import { CreateGroupDialog } from "@/components/create-group-dialog"
+import { CreationDropdown } from "@/components/creation-dropdown"
 import { CalendarWidget } from "@/components/calendar-widget"
 import { ToolsWidget } from "@/components/tools-widget"
 import { GlobalSearchBar } from "@/components/layout/global-search-bar"
@@ -96,7 +96,7 @@ export function DashboardClient({
 
                         <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                             <GlobalSearchBar />
-                            <CreateGroupDialog onSuccess={() => window.location.reload()} />
+                            <CreationDropdown onSuccess={() => window.location.reload()} />
                         </div>
                     </div>
 

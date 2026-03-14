@@ -26,7 +26,7 @@ import { createWorkspace } from '@/app/actions/workspaces'
 import { WorkspaceCategory } from '@/types'
 import { toast } from 'sonner'
 
-export function CreateWorkspaceDialog() {
+export function CreateWorkspaceDialog({ trigger }: { trigger?: React.ReactNode } = {}) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [category, setCategory] = useState<WorkspaceCategory>('Trabajo')
@@ -71,10 +71,12 @@ export function CreateWorkspaceDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start mt-2">
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Workspace
-        </Button>
+        {trigger || (
+            <Button variant="outline" className="w-full justify-start mt-2">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Workspace
+            </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

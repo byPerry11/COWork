@@ -60,7 +60,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect logged in users away from login/auth routes
-    const isAuthPage = request.nextUrl.pathname === '/login' || 
+    const isAuthPage = request.nextUrl.pathname === '/' ||
+                       request.nextUrl.pathname === '/login' || 
                        request.nextUrl.pathname.startsWith('/auth/')
     
     if (user && isAuthPage) {

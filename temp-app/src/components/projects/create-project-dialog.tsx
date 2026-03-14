@@ -59,9 +59,10 @@ const projectSchema = z.object({
 interface CreateProjectDialogProps {
   onSuccess: () => void
   workGroupId?: string
+  trigger?: React.ReactNode
 }
 
-export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ onSuccess, workGroupId, trigger }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [invitedUsers, setInvitedUsers] = useState<string[]>([])
@@ -124,10 +125,12 @@ export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDia
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        {trigger || (
+          <Button>
           <Plus className="mr-2 h-4 w-4" />
           Create Project
         </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="w-[95vw] sm:max-w-[425px]">
         <DialogHeader>

@@ -34,7 +34,7 @@ const formSchema = z.object({
     description: z.string().optional(),
 })
 
-export function CreateGroupDialog({ onSuccess }: { onSuccess?: () => void }) {
+export function CreateGroupDialog({ onSuccess, trigger }: { onSuccess?: () => void; trigger?: React.ReactNode }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
@@ -81,10 +81,12 @@ export function CreateGroupDialog({ onSuccess }: { onSuccess?: () => void }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="gap-2">
-                    <FolderPlus className="h-4 w-4" />
-                    Create Group
-                </Button>
+                {trigger || (
+                    <Button className="gap-2">
+                        <FolderPlus className="h-4 w-4" />
+                        Create Group
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
