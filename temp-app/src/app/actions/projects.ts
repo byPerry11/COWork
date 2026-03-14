@@ -33,6 +33,7 @@ const updateProjectSchema = z.object({
     project_icon: z.string().optional(),
     end_date: z.string().datetime().optional(),
     max_users: z.number().min(1).optional(),
+    workspace_id: z.string().uuid().nullable().optional(),
 })
 
 const updateProjectVisibilitySchema = z.object({
@@ -237,6 +238,7 @@ export async function updateProject(
         if (validated.project_icon) updateData.project_icon = validated.project_icon
         if (validated.end_date !== undefined) updateData.end_date = validated.end_date
         if (validated.max_users) updateData.max_users = validated.max_users
+        if (validated.workspace_id !== undefined) updateData.workspace_id = validated.workspace_id
 
         // Actualizar proyecto
         const { error: updateError } = await supabase

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import { ProjectCard } from "@/components/projects/project-card"
 import { WorkGroupCard } from "@/components/work-group-card"
 import { CreationDropdown } from "@/components/creation-dropdown"
@@ -8,7 +8,12 @@ import { CalendarWidget } from "@/components/calendar-widget"
 import { ToolsWidget } from "@/components/tools-widget"
 import { GlobalSearchBar } from "@/components/layout/global-search-bar"
 import { getRandomQuote } from "@/lib/motivational-quotes"
-
+import { Workspace } from "@/types"
+import { Briefcase, Folder, Heart, School, Grid2x2 } from "lucide-react"
+import Link from "next/link"
+import { MoveToWorkspaceDialog } from "@/components/dashboard/MoveToWorkspaceDialog"
+import { EditProjectDialog } from "@/components/dashboard/EditProjectDialog"
+import { EditGroupDialog } from "@/components/dashboard/EditGroupDialog"
 interface UserProject {
     id: string
     title: string
@@ -39,16 +44,43 @@ interface DashboardClientProps {
     initialProjects: UserProject[]
     initialWorkGroups: UserWorkGroup[]
     sessionUserId: string
+    initialWorkspaces: Workspace[]
+    activeWorkspaceId: string | null
+}
+
+const getCategoryIcon = (category: string) => {
+    switch (category) {
+        case 'Escuela': return <School className="h-4 w-4" />
+        case 'Trabajo': return <Briefcase className="h-4 w-4" />
+        case 'Hobby': return <Heart className="h-4 w-4" />
+        default: return <Folder className="h-4 w-4" />
+    }
 }
 
 export function DashboardClient({
     displayName,
     initialProjects,
     initialWorkGroups,
-    sessionUserId
+    sessionUserId,
+    initialWorkspaces,
+    activeWorkspaceId
 }: DashboardClientProps) {
     // Get random motivational quote (stable per page load)
     const randomQuote = useMemo(() => getRandomQuote(), [])
+
+    // Dialog States
+    const [moveToWorkspaceInfo, setMoveToWorkspaceInfo] = useState<{ open: boolean; entityId: string; entityType: 'project' | 'group' } | null>(null)
+    const [editProjectData, setEditProjectData] = useState<{
+        open: boolean
+        id: string
+        type: 'project'
+        initialData: { title: string; description?: string | null; color?: string; project_icon?: string }
+    }>({ open: false, id: '', type: 'project', initialData: { title: '' } })
+    const [editGroupData, setEditGroupData] = useState<{
+        open: boolean
+        id: string
+        initialData: { name: string; description?: string | null }
+    }>({ open: false, id: '', initialData: { name: '' } })
 
     // Calculate calendar events from projects
     const calendarEvents = useMemo(() => {
@@ -100,6 +132,48 @@ export function DashboardClient({
                         </div>
                     </div>
 
+                    {/* Workspaces Horizontal Scroll/Wrap */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold">Workspaces</h2>
+                        </div>
+                        <div className="flex flex-nowrap overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
+                            {/* Option: All Workspaces */}
+                            <Link
+                                href="/dashboard"
+                                className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${
+                                    !activeWorkspaceId
+                                        ? "bg-primary text-primary-foreground shadow-md border-primary/20"
+                                        : "bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-accent/50 text-foreground"
+                                }`}
+                            >
+                                <Grid2x2 className={`h-5 w-5 ${!activeWorkspaceId ? 'opacity-100' : 'text-muted-foreground'}`} />
+                                <span className={`font-medium ${!activeWorkspaceId ? '' : 'text-muted-foreground'}`}>Todos</span>
+                            </Link>
+
+                            {initialWorkspaces.map(workspace => (
+                                <Link
+                                    key={workspace.id}
+                                    href={`/dashboard?workspace=${workspace.id}`}
+                                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border transition-all min-w-[140px] ${
+                                        activeWorkspaceId === workspace.id
+                                            ? "bg-primary text-primary-foreground shadow-md border-primary/20"
+                                            : "bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-accent/50 text-foreground"
+                                    }`}
+                                >
+                                    <div className={activeWorkspaceId === workspace.id ? 'opacity-100' : 'text-muted-foreground'}>
+                                        {getCategoryIcon(workspace.category)}
+                                    </div>
+                                    <span className={`font-medium truncate ${activeWorkspaceId === workspace.id ? '' : 'text-muted-foreground'}`}>
+                                        {workspace.name}
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="border-t pt-2" />
+
                     {/* Work Groups Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -121,6 +195,12 @@ export function DashboardClient({
                                         description={group.description}
                                         memberCount={group.memberCount}
                                         isOwner={group.owner_id === sessionUserId}
+                                        onEdit={() => setEditGroupData({
+                                            open: true,
+                                            id: group.id,
+                                            initialData: { name: group.name, description: group.description }
+                                        })}
+                                        onMove={(id) => setMoveToWorkspaceInfo({ open: true, entityId: id, entityType: 'group' })}
                                     />
                                 ))}
                             </div>
@@ -164,6 +244,13 @@ export function DashboardClient({
                                                     status={project.status}
                                                     memberCount={project.memberCount}
                                                     members={project.members}
+                                                    onEdit={() => setEditProjectData({
+                                                        open: true,
+                                                        id: project.id,
+                                                        type: 'project',
+                                                        initialData: { title: project.title, description: project.description, color: project.color || '#6366f1', project_icon: project.project_icon || '📁' }
+                                                    })}
+                                                    onMove={(id) => setMoveToWorkspaceInfo({ open: true, entityId: id, entityType: 'project' })}
                                                 />
                                             ))}
                                     </div>
@@ -203,6 +290,13 @@ export function DashboardClient({
                                                     members={project.members}
                                                     membershipStatus={project.membershipStatus}
                                                     onRespond={() => window.location.reload()}
+                                                    onEdit={() => setEditProjectData({
+                                                        open: true,
+                                                        id: project.id,
+                                                        type: 'project',
+                                                        initialData: { title: project.title, description: project.description, color: project.color || '#6366f1', project_icon: project.project_icon || '📁' }
+                                                    })}
+                                                    onMove={(id) => setMoveToWorkspaceInfo({ open: true, entityId: id, entityType: 'project' })}
                                                 />
                                             ))}
                                     </div>
@@ -219,6 +313,30 @@ export function DashboardClient({
                     </div>
                 </div>
             </main>
+            {/* Dialogs */}
+            {moveToWorkspaceInfo && (
+                <MoveToWorkspaceDialog
+                    open={moveToWorkspaceInfo.open}
+                    onOpenChange={(op: boolean) => setMoveToWorkspaceInfo({ ...moveToWorkspaceInfo, open: op })}
+                    entityId={moveToWorkspaceInfo.entityId}
+                    entityType={moveToWorkspaceInfo.entityType}
+                />
+            )}
+            
+            <EditProjectDialog
+                open={editProjectData.open && editProjectData.type === 'project'}
+                onOpenChange={(op: boolean) => setEditProjectData({ ...editProjectData, open: op })}
+                projectId={editProjectData.id}
+                initialData={editProjectData.initialData}
+            />
+
+            <EditGroupDialog
+                open={editGroupData.open}
+                onOpenChange={(op: boolean) => setEditGroupData({ ...editGroupData, open: op })}
+                groupId={editGroupData.id}
+                initialData={editGroupData.initialData}
+            />
+
         </div>
     )
 }

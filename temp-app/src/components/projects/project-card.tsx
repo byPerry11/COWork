@@ -7,6 +7,14 @@ import Link from "next/link"
 import { memo } from "react"
 import { ENGINEERING_CATEGORIES } from "@/lib/project-constants"
 import { AvatarStack } from "@/components/avatar-stack"
+import { MoreVertical, Edit, FolderInput } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 interface ProjectCardProps {
     id: string
@@ -22,6 +30,8 @@ interface ProjectCardProps {
     membershipStatus?: "active" | "pending" | "rejected"
     members?: { avatar_url: string | null }[]
     onRespond?: (accept: boolean) => void
+    onEdit?: (id: string) => void
+    onMove?: (id: string) => void
 }
 
 export const ProjectCard = memo(({
@@ -37,7 +47,9 @@ export const ProjectCard = memo(({
     memberCount = 1,
     members = [],
     membershipStatus = "active",
-    onRespond
+    onRespond,
+    onEdit,
+    onMove
 }: ProjectCardProps) => {
     const isPending = membershipStatus === "pending"
     const roleColors = {
@@ -105,12 +117,37 @@ export const ProjectCard = memo(({
                             <span className="text-2xl flex-shrink-0">{project_icon}</span>
                             <h3 className="font-semibold truncate">{title}</h3>
                         </div>
-                        <Badge
-                            variant="secondary"
-                            className={`${roleColors[role]} text-white text-xs flex-shrink-0`}
-                        >
-                            {role}
-                        </Badge>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Badge
+                                variant="secondary"
+                                className={`${roleColors[role]} text-white text-xs`}
+                            >
+                                {role}
+                            </Badge>
+                            
+                            {/* Opciones Menu */}
+                            {!isPending && ( role === 'admin' || role === 'manager' ) && (
+                                <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => onEdit?.(id)}>
+                                                <Edit className="h-4 w-4 mr-2" />
+                                                Editar
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onMove?.(id)}>
+                                                <FolderInput className="h-4 w-4 mr-2" />
+                                                Mover a Workspace
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Category Badge */}

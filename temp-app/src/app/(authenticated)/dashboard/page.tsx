@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardClient } from "./DashboardClient"
-
+import { getWorkspaces } from "@/app/actions/workspaces"
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -21,6 +21,10 @@ export default async function DashboardPage({
 
   const userId = session.user.id
 
+  // Fetch workspaces
+  const workspacesResult = await getWorkspaces()
+  const workspaces = workspacesResult.success ? workspacesResult.data : []
+
   // Fetch all data in parallel
   const profileQuery = supabase
     .from("profiles")
@@ -29,7 +33,7 @@ export default async function DashboardPage({
     .single()
 
     // Base query for projects
-    const projectsQuery = supabase
+    let projectsQuery = supabase
       .from("project_members")
       .select(`
         role,
@@ -54,6 +58,10 @@ export default async function DashboardPage({
       .eq("user_id", userId)
       .in("status", ["active", "pending"])
     
+    if (workspaceId) {
+      projectsQuery = projectsQuery.eq("project.workspace_id", workspaceId)
+    }
+
     // Group query base
     let groupsQuery = supabase
       .from('work_groups')
@@ -126,6 +134,8 @@ export default async function DashboardPage({
       initialProjects={projects as any}
       initialWorkGroups={workGroups}
       sessionUserId={userId}
+      initialWorkspaces={workspaces}
+      activeWorkspaceId={workspaceId}
     />
   )
 }

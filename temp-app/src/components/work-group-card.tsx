@@ -1,8 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Folder, Users, ArrowRight } from "lucide-react"
+import { Folder, Users, ArrowRight, MoreVertical, Edit, FolderInput } from "lucide-react"
 import { memo } from "react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,9 +20,19 @@ interface WorkGroupCardProps {
     description?: string | null
     memberCount?: number
     isOwner?: boolean
+    onEdit?: (id: string) => void
+    onMove?: (id: string) => void
 }
 
-export const WorkGroupCard = memo(({ id, name, description, memberCount = 0, isOwner }: WorkGroupCardProps) => {
+export const WorkGroupCard = memo(({
+    id,
+    name,
+    description,
+    memberCount = 0,
+    isOwner,
+    onEdit,
+    onMove
+}: WorkGroupCardProps) => {
     return (
         <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
@@ -27,7 +43,30 @@ export const WorkGroupCard = memo(({ id, name, description, memberCount = 0, isO
                         </div>
                         <CardTitle className="line-clamp-1 text-lg">{name}</CardTitle>
                     </div>
-                    {isOwner && <Badge variant="secondary">Owner</Badge>}
+                    <div className="flex items-center gap-2">
+                        {isOwner && <Badge variant="secondary">Owner</Badge>}
+                        {isOwner && (
+                            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => onEdit?.(id)}>
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onMove?.(id)}>
+                                            <FolderInput className="h-4 w-4 mr-2" />
+                                            Mover a Workspace
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex-1 pb-4">

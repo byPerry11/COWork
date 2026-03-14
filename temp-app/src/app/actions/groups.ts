@@ -18,6 +18,7 @@ const updateGroupSchema = z.object({
     group_id: z.string().uuid(),
     name: z.string().min(3).optional(),
     description: z.string().optional(),
+    workspace_id: z.string().uuid().nullable().optional(),
 })
 
 const transferGroupOwnershipSchema = z.object({
@@ -170,6 +171,8 @@ export async function updateGroup(
         if (validated.name) updateData.name = validated.name
         if (validated.description !== undefined)
             updateData.description = validated.description
+        if (validated.workspace_id !== undefined) 
+            updateData.workspace_id = validated.workspace_id
 
         // Actualizar grupo
         const { error: updateError } = await supabase
