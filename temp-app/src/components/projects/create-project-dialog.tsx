@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -64,6 +65,8 @@ export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDia
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [invitedUsers, setInvitedUsers] = useState<string[]>([])
+  const searchParams = useSearchParams()
+  const workspaceId = searchParams.get('workspace')
 
   const form = useForm<z.infer<typeof projectSchema>>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,6 +97,7 @@ export function CreateProjectDialog({ onSuccess, workGroupId }: CreateProjectDia
         max_users: values.max_users,
         is_public: values.is_public,
         work_group_id: workGroupId,
+        workspace_id: workspaceId || undefined,
         invited_users: invitedUsers,
       })
 

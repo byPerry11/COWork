@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/contexts/sidebar-context"
 import { NotificationsPopover } from "@/components/layout/notifications-popover";
+import { WorkspaceSelector } from "@/components/workspaces/workspace-selector";
 
 interface UserProfile {
   email: string | undefined
@@ -91,6 +92,10 @@ export function AppSidebar() {
             >
               <X className="h-5 w-5" />
             </Button>
+          </div>
+
+          <div className="px-4 py-2">
+            <WorkspaceSelector />
           </div>
 
           {/* Navigation */}

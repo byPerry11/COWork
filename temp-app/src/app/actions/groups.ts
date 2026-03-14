@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache'
 const createGroupSchema = z.object({
     name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
     description: z.string().optional(),
+    workspace_id: z.string().uuid().optional(),
 })
 
 const updateGroupSchema = z.object({
@@ -92,6 +93,7 @@ export async function createGroup(
             .insert({
                 name: validated.name,
                 description: validated.description || null,
+                workspace_id: validated.workspace_id || null,
                 owner_id: user.id,
             })
             .select('id')

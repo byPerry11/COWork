@@ -21,6 +21,7 @@ const createProjectSchema = z.object({
     max_users: z.number().min(1, 'Se requiere al menos 1 usuario'),
     is_public: z.boolean().default(false),
     work_group_id: z.string().uuid().optional(),
+    workspace_id: z.string().uuid().optional(),
     invited_users: z.array(z.string().uuid()).optional(),
 })
 
@@ -123,6 +124,7 @@ export async function createProject(
                 project_icon: validated.project_icon,
                 owner_id: user.id,
                 work_group_id: validated.work_group_id || null,
+                workspace_id: validated.workspace_id || null,
                 start_date: validated.start_date,
                 end_date: validated.end_date || null,
                 max_users: validated.max_users,

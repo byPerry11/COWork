@@ -15,10 +15,20 @@ export interface Profile {
   display_name: string | null
   updated_at: string
 }
+export type WorkspaceCategory = 'Escuela' | 'Trabajo' | 'Hobby' | 'Otro'
 
+export interface Workspace {
+  id: string
+  name: string
+  category: WorkspaceCategory
+  owner_id: string
+  created_at: string
+  updated_at: string
+}
 
 export interface WorkGroup {
   id: string
+  workspace_id?: string | null // Reference to Workspace
   name: string
   description?: string | null
   owner_id: string
@@ -59,7 +69,8 @@ export interface TaskAssignment {
 
 export interface Project {
   id: string
-  work_group_id?: string | null // New field
+  work_group_id?: string | null // Reference to WorkGroup
+  workspace_id?: string | null // Reference to Workspace
   owner_id: string
   title: string
   description?: string | null

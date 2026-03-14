@@ -2,8 +2,16 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardClient } from "./DashboardClient"
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const supabase = await createClient()
+
+  // params might be a Promise in Next.js 15, await just in case
+  const resolvedParams = await searchParams
+  const workspaceId = typeof resolvedParams.workspace === 'string' ? resolvedParams.workspace : null
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -14,15 +22,14 @@ export default async function DashboardPage() {
   const userId = session.user.id
 
   // Fetch all data in parallel
-  const [profileRes, projectsRes, groupsRes] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("display_name, username")
-      .eq("id", userId)
-      .single(),
+  const profileQuery = supabase
+    .from("profiles")
+    .select("display_name, username")
+    .eq("id", userId)
+    .single()
 
-    // Optimized query to get projects, their checkpoints (for progress) and members (for avatars)
-    supabase
+    // Base query for projects
+    const projectsQuery = supabase
       .from("project_members")
       .select(`
         role,
@@ -45,20 +52,30 @@ export default async function DashboardPage() {
         )
       `)
       .eq("user_id", userId)
-      .in("status", ["active", "pending"]),
-
-    // Fetch groups with member counts
-    supabase
+      .in("status", ["active", "pending"])
+    
+    // Group query base
+    let groupsQuery = supabase
       .from('work_groups')
       .select(`
         id,
         name,
         description,
         owner_id,
-        members:work_group_members(id)
+        workspace_id,
+        members:work_group_members(user_id)
       `)
       .order('created_at', { ascending: false })
-  ])
+
+    if (workspaceId) {
+      groupsQuery = groupsQuery.eq('workspace_id', workspaceId)
+    }
+
+    const [profileRes, projectsRes, groupsRes] = await Promise.all([
+      profileQuery,
+      projectsQuery,
+      groupsQuery
+    ])
 
   const profile = profileRes.data
   const displayName = profile?.display_name || profile?.username || "User"

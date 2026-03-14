@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, FolderPlus } from "lucide-react"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +38,8 @@ export function CreateGroupDialog({ onSuccess }: { onSuccess?: () => void }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const workspaceId = searchParams.get('workspace')
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -53,6 +55,7 @@ export function CreateGroupDialog({ onSuccess }: { onSuccess?: () => void }) {
             const result = await createGroup({
                 name: values.name,
                 description: values.description,
+                workspace_id: workspaceId || undefined,
             })
 
             if (!result.success) {
