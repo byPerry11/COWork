@@ -9,8 +9,9 @@ import { ToolsWidget } from "@/components/tools-widget"
 import { GlobalSearchBar } from "@/components/layout/global-search-bar"
 import { getRandomQuote } from "@/lib/motivational-quotes"
 import { Workspace } from "@/types"
-import { Briefcase, Folder, Heart, School, Grid2x2 } from "lucide-react"
+import { Folder, Heart, School, Grid2x2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { WorkspaceCard } from "@/components/workspaces/workspace-card"
 import { MoveToWorkspaceDialog } from "@/components/dashboard/MoveToWorkspaceDialog"
 import { EditProjectDialog } from "@/components/dashboard/EditProjectDialog"
 import { EditGroupDialog } from "@/components/dashboard/EditGroupDialog"
@@ -48,14 +49,6 @@ interface DashboardClientProps {
     activeWorkspaceId: string | null
 }
 
-const getCategoryIcon = (category: string) => {
-    switch (category) {
-        case 'Escuela': return <School className="h-4 w-4" />
-        case 'Trabajo': return <Briefcase className="h-4 w-4" />
-        case 'Hobby': return <Heart className="h-4 w-4" />
-        default: return <Folder className="h-4 w-4" />
-    }
-}
 
 export function DashboardClient({
     displayName,
@@ -132,44 +125,42 @@ export function DashboardClient({
                         </div>
                     </div>
 
-                    {/* Workspaces Horizontal Scroll/Wrap */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold">Workspaces</h2>
-                        </div>
-                        <div className="flex flex-nowrap overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
-                            {/* Option: All Workspaces */}
-                            <Link
-                                href="/dashboard"
-                                className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                                    !activeWorkspaceId
-                                        ? "bg-primary text-primary-foreground shadow-md border-primary/20"
-                                        : "bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-accent/50 text-foreground"
-                                }`}
-                            >
-                                <Grid2x2 className={`h-5 w-5 ${!activeWorkspaceId ? 'opacity-100' : 'text-muted-foreground'}`} />
-                                <span className={`font-medium ${!activeWorkspaceId ? '' : 'text-muted-foreground'}`}>Todos</span>
-                            </Link>
-
-                            {initialWorkspaces.map(workspace => (
-                                <Link
-                                    key={workspace.id}
-                                    href={`/dashboard?workspace=${workspace.id}`}
-                                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-xl border transition-all min-w-[140px] ${
-                                        activeWorkspaceId === workspace.id
-                                            ? "bg-primary text-primary-foreground shadow-md border-primary/20"
-                                            : "bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-accent/50 text-foreground"
-                                    }`}
+                    {/* Workspaces Section */}
+                    <div className="space-y-4">
+                        {!activeWorkspaceId ? (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold">Workspaces</h2>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {initialWorkspaces.map(workspace => (
+                                        <WorkspaceCard
+                                            key={workspace.id}
+                                            id={workspace.id}
+                                            name={workspace.name}
+                                            category={workspace.category}
+                                        />
+                                    ))}
+                                    {initialWorkspaces.length === 0 && (
+                                        <div className="col-span-full text-center py-6 border-2 border-dashed rounded-lg bg-muted/20">
+                                            <p className="text-muted-foreground text-sm">No tienes workspaces. Usa el menú para crear uno.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <Link 
+                                    href="/dashboard"
+                                    className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors flexitems-center"
                                 >
-                                    <div className={activeWorkspaceId === workspace.id ? 'opacity-100' : 'text-muted-foreground'}>
-                                        {getCategoryIcon(workspace.category)}
-                                    </div>
-                                    <span className={`font-medium truncate ${activeWorkspaceId === workspace.id ? '' : 'text-muted-foreground'}`}>
-                                        {workspace.name}
-                                    </span>
+                                    <ArrowLeft className="h-5 w-5" />
                                 </Link>
-                            ))}
-                        </div>
+                                <h2 className="text-2xl font-bold">
+                                    {initialWorkspaces.find(w => w.id === activeWorkspaceId)?.name || 'Workspace'}
+                                </h2>
+                            </div>
+                        )}
                     </div>
 
                     <div className="border-t pt-2" />

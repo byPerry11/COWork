@@ -60,6 +60,8 @@ export default async function DashboardPage({
     
     if (workspaceId) {
       projectsQuery = projectsQuery.eq("project.workspace_id", workspaceId)
+    } else {
+      projectsQuery = projectsQuery.is("project.workspace_id", null)
     }
 
     // Group query base
@@ -77,6 +79,8 @@ export default async function DashboardPage({
 
     if (workspaceId) {
       groupsQuery = groupsQuery.eq('workspace_id', workspaceId)
+    } else {
+      groupsQuery = groupsQuery.is('workspace_id', null)
     }
 
     const [profileRes, projectsRes, groupsRes] = await Promise.all([
