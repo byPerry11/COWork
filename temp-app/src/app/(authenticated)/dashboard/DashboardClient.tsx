@@ -116,6 +116,8 @@ export function DashboardClient({
                                 src="/main-logo.png"
                                 alt="COWork"
                                 className="h-12 w-12 rounded-xl shadow-md md:hidden object-cover"
+                                loading="lazy"
+                                decoding="async"
                             />
                         </div>
 

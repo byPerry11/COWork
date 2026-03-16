@@ -17,7 +17,7 @@ export default function AuthenticatedLayout({
         <PomodoroProvider>
             <FloatingNav />
             <div className="hidden md:block fixed top-6 left-6 z-50">
-                <img src="/main-logo.png" alt="COWork" className="h-12 w-auto" />
+                <img src="/main-logo.png" alt="COWork" className="h-12 w-auto" loading="lazy" decoding="async" />
             </div>
             
             <AnimatePresence mode="wait">

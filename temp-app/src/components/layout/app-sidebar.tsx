@@ -82,7 +82,7 @@ export function AppSidebar() {
           <div className="flex h-24 items-center justify-between border-b px-4 md:justify-center">
             <Link href="/dashboard" className="flex items-center gap-2 font-bold">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/main-logo.png" alt="COWork" className="h-16 w-auto object-contain" />
+              <img src="/main-logo.png" alt="COWork" className="h-16 w-auto object-contain" loading="lazy" decoding="async" />
             </Link>
             <Button
               variant="ghost"
