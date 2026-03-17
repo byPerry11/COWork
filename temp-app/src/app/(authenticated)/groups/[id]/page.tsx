@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProjectCard } from "@/components/projects/project-card"
+import { respondToProjectInvitation } from "@/app/actions/members"
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GroupSettingsDialog } from "@/components/group-settings-dialog"
@@ -24,7 +25,8 @@ import { DraggableMember } from "@/components/tasks/draggable-member"
 interface GroupProject extends Project {
     progress: number
     memberCount: number
-    role: "admin" | "manager" | "member" // Derived role
+    role: "admin" | "manager" | "member"
+    membershipStatus?: "active" | "pending" | "rejected"
 }
 
 export default function WorkGroupPage() {
@@ -96,7 +98,7 @@ export default function WorkGroupPage() {
                 .select(`
                     *,
                     checkpoints(is_completed),
-                    project_members(count)
+                    project_members(role, status, user_id)
                 `)
                 .eq('work_group_id', id)
                 .order('created_at', { ascending: false })
@@ -106,15 +108,19 @@ export default function WorkGroupPage() {
             // Transform projects
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const formattedProjects: GroupProject[] = (projectsData as any[])?.map(p => {
-                const total = p.checkpoints?.length || 0
-                const completed = p.checkpoints?.filter((c: any) => c.is_completed).length || 0
+                const checkpoints = p.checkpoints || []
+                const total = checkpoints.length
+                const completed = checkpoints.filter((c: any) => c.is_completed).length
                 const progress = total > 0 ? (completed / total) * 100 : 0
+                
+                const myMember = (p.project_members as any[])?.find(m => m.user_id === session.user.id)
 
                 return {
                     ...p,
                     progress,
-                    memberCount: p.project_members?.[0]?.count || 0,
-                    role: 'member' // Default role for display purposes
+                    memberCount: p.project_members?.length || 0,
+                    role: myMember?.role || 'member',
+                    membershipStatus: myMember?.status
                 }
             }) || []
 
@@ -178,6 +184,25 @@ export default function WorkGroupPage() {
     useEffect(() => {
         if (id) fetchData()
     }, [id, fetchData])
+
+    const handleRespond = async (projectId: string, accept: boolean) => {
+        try {
+            const result = await respondToProjectInvitation({
+                project_id: projectId,
+                accept
+            })
+
+            if (result.success) {
+                toast.success(accept ? "Invitación aceptada" : "Invitación rechazada")
+                fetchData()
+            } else {
+                toast.error(result.error || "Error al responder a la invitación")
+            }
+        } catch (error) {
+            console.error("Error responding to invitation:", error)
+            toast.error("Ocurrió un error inesperado")
+        }
+    }
 
     const handleDragStart = (event: any) => {
         if (event.active.data.current?.type === 'Member') {
@@ -282,6 +307,7 @@ export default function WorkGroupPage() {
                                             key={p.id}
                                             {...p}
                                             members={[]}
+                                            onRespond={(accept) => handleRespond(p.id, accept)}
                                         />
                                     ))}
                                 </div>

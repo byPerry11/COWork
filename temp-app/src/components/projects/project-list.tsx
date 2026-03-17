@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Project, Role } from "@/types"
 import { ProjectCard } from "@/components/projects/project-card"
+import { respondToProjectInvitation } from "@/app/actions/members"
+import { toast } from "sonner"
 
 interface ProjectListProps {
   userId: string
@@ -13,6 +15,7 @@ interface ProjectListProps {
 // DB Response Type
 interface ProjectDBResponse {
   role: Role
+  status: 'active' | 'pending' | 'rejected'
   projects: {
     id: string
     title: string
@@ -40,6 +43,7 @@ interface ProjectWithRole extends Project {
   total_tasks: number
   completed_tasks: number
   members: { avatar_url: string | null }[]
+  membershipStatus?: 'active' | 'pending' | 'rejected'
 }
 
 export function ProjectList({ userId }: ProjectListProps) {
@@ -53,6 +57,7 @@ export function ProjectList({ userId }: ProjectListProps) {
           .from("project_members")
           .select(`
             role,
+            status,
             projects:project_id (
               id,
               owner_id,
@@ -103,7 +108,8 @@ export function ProjectList({ userId }: ProjectListProps) {
             progress,
             total_tasks: total,
             completed_tasks: completed,
-            members
+            members,
+            membershipStatus: item.status
           }
         }) as ProjectWithRole[]
 
@@ -119,6 +125,33 @@ export function ProjectList({ userId }: ProjectListProps) {
       fetchProjects()
     }
   }, [userId])
+
+  const handleRespond = async (projectId: string, accept: boolean) => {
+    try {
+      const result = await respondToProjectInvitation({
+        project_id: projectId,
+        accept
+      })
+
+      if (result.success) {
+        toast.success(accept ? "Invitación aceptada" : "Invitación rechazada")
+        // Refetch projects
+        setLoading(true)
+        const fetchProjects = async () => {
+          // Re-fetch logic (better to extract fetchProjects if used multiple times)
+          // For simplicity, I'll just reload or call the effect again by changing a dependency
+          // but I'll move fetchProjects outside or just repeat it here.
+          // Actually, I can just use a 'refresh' state.
+        }
+        window.location.reload()
+      } else {
+        toast.error(result.error || "Error al responder a la invitación")
+      }
+    } catch (error) {
+      console.error("Error responding to invitation:", error)
+      toast.error("Ocurrió un error inesperado")
+    }
+  }
 
   if (loading) {
     return (
@@ -165,6 +198,8 @@ export function ProjectList({ userId }: ProjectListProps) {
             progress={project.progress}
             memberCount={project.members.length}
             members={project.members}
+            membershipStatus={project.membershipStatus}
+            onRespond={(accept) => handleRespond(project.id, accept)}
           />
         </div>
       ))}

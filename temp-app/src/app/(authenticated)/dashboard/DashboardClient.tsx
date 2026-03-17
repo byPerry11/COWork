@@ -15,6 +15,8 @@ import { WorkspaceCard } from "@/components/workspaces/workspace-card"
 import { MoveToWorkspaceDialog } from "@/components/dashboard/MoveToWorkspaceDialog"
 import { EditProjectDialog } from "@/components/dashboard/EditProjectDialog"
 import { EditGroupDialog } from "@/components/dashboard/EditGroupDialog"
+import { respondToProjectInvitation } from "@/app/actions/members"
+import { toast } from "sonner"
 interface UserProject {
     id: string
     title: string
@@ -75,6 +77,25 @@ export function DashboardClient({
         id: string
         initialData: { name: string; description?: string | null }
     }>({ open: false, id: '', initialData: { name: '' } })
+
+    const handleRespond = async (projectId: string, accept: boolean) => {
+        try {
+            const result = await respondToProjectInvitation({
+                project_id: projectId,
+                accept
+            })
+
+            if (result.success) {
+                toast.success(accept ? "Project invitation accepted" : "Project invitation declined")
+                window.location.reload()
+            } else {
+                toast.error(result.error || "Failed to respond to invitation")
+            }
+        } catch (error) {
+            console.error("Error responding to invitation:", error)
+            toast.error("An unexpected error occurred")
+        }
+    }
 
     // Calculate calendar events from projects
     const calendarEvents = useMemo(() => {
@@ -283,7 +304,7 @@ export function DashboardClient({
                                                     memberCount={project.memberCount}
                                                     members={project.members}
                                                     membershipStatus={project.membershipStatus}
-                                                    onRespond={() => window.location.reload()}
+                                                    onRespond={(accept) => handleRespond(project.id, accept)}
                                                     onEdit={() => setEditProjectData({
                                                         open: true,
                                                         id: project.id,
