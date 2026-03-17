@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { User, Crown } from "lucide-react"
 import { ManageMembersDialog } from "@/components/manage-members-dialog"
+import { StartGroupChatButton } from "@/components/chat/start-group-chat-button"
 import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 
@@ -26,6 +27,7 @@ interface ProjectMembersListProps {
     members: ProjectMember[]
     currentUserId: string
     projectId: string
+    projectTitle: string
     userRole: string | null
 }
 
@@ -102,8 +104,9 @@ function DraggableMemberItem({ member, currentUserId, canDrag }: { member: Proje
     )
 }
 
-export function ProjectMembersList({ members, currentUserId, projectId, userRole }: ProjectMembersListProps) {
+export function ProjectMembersList({ members, currentUserId, projectId, projectTitle, userRole }: ProjectMembersListProps) {
     const activeMembers = members.filter(m => m.status === 'active' || m.status === 'pending')
+    const activeMemberIds = activeMembers.map(m => m.user_id)
 
     // Only admins can assign members
     const canDrag = userRole === 'admin'
@@ -114,6 +117,15 @@ export function ProjectMembersList({ members, currentUserId, projectId, userRole
                 <CardTitle className="flex justify-between items-center text-base">
                     Team
                     <div className="flex items-center gap-1">
+                        <StartGroupChatButton
+                            memberUserIds={activeMemberIds}
+                            chatName={projectTitle}
+                            sourceType="project"
+                            sourceLabel={`proyecto "${projectTitle}"`}
+                            currentUserId={currentUserId}
+                            size="icon"
+                            className="h-7 w-7"
+                        />
                         <ManageMembersDialog projectId={projectId} />
                         <Badge variant="secondary" className="text-xs h-5 px-1">{activeMembers.length}</Badge>
                     </div>

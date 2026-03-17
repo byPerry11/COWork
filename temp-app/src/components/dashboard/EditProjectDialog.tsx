@@ -36,7 +36,17 @@ const formSchema = z.object({
     description: z.string().optional(),
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional(),
     project_icon: z.string().optional(),
+    max_users: z.coerce.number().min(1, "Se requiere al menos 1 miembro"),
 })
+
+type FormValues = {
+    title: string
+    description?: string
+    color?: string
+    project_icon?: string
+    max_users: number
+}
+
 
 export interface EditProjectDialogProps {
     open: boolean
@@ -47,19 +57,21 @@ export interface EditProjectDialogProps {
         description?: string | null
         color?: string
         project_icon?: string
+        max_users?: number
     }
 }
 
 export function EditProjectDialog({ open, onOpenChange, projectId, initialData }: EditProjectDialogProps) {
     const [isLoading, setIsLoading] = useState(false)
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         defaultValues: {
             title: initialData.title,
             description: initialData.description || "",
             color: initialData.color || "#6366f1",
             project_icon: initialData.project_icon || "📁",
+            max_users: initialData.max_users ?? 1,
         },
     })
 
@@ -70,6 +82,7 @@ export function EditProjectDialog({ open, onOpenChange, projectId, initialData }
                 description: initialData.description || "",
                 color: initialData.color || "#6366f1",
                 project_icon: initialData.project_icon || "📁",
+                max_users: initialData.max_users ?? 1,
             })
         }
     }, [open, initialData, form])
@@ -83,6 +96,7 @@ export function EditProjectDialog({ open, onOpenChange, projectId, initialData }
                 description: values.description,
                 color: values.color,
                 project_icon: values.project_icon,
+                max_users: values.max_users,
             })
 
             if (!result.success) {
@@ -174,6 +188,28 @@ export function EditProjectDialog({ open, onOpenChange, projectId, initialData }
                                     <FormControl>
                                         <EmojiPicker value={field.value || "📁"} onChange={field.onChange} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="max_users"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Límite de miembros</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            min={1}
+                                            placeholder="Ej. 10"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Número máximo de integrantes permitidos en el equipo.
+                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}

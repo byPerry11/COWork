@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { Loader2, ArrowLeft } from "lucide-react"
+import { StartGroupChatButton } from "@/components/chat/start-group-chat-button"
 import { DndContext, DragOverlay, useSensor, useSensors, MouseSensor, TouchSensor, DragEndEvent } from "@dnd-kit/core"
 import { toast } from "sonner"
 
@@ -342,7 +343,19 @@ export default function WorkGroupPage() {
                                     {canManageGroup && (
                                         <ManageGroupMembersDialog
                                             groupId={id}
+                                            groupName={group.name}
+                                            currentUserId={currentUser}
                                             onMemberAdded={fetchData}
+                                        />
+                                    )}
+                                    {members.length > 0 && (
+                                        <StartGroupChatButton
+                                            memberUserIds={members.map(m => m.user_id)}
+                                            chatName={group.name}
+                                            sourceType="work_group"
+                                            sourceLabel={`grupo "${group.name}"`}
+                                            currentUserId={currentUser}
+                                            size="sm"
                                         />
                                     )}
                                 </div>

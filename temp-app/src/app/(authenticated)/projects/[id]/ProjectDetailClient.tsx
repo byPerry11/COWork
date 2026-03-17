@@ -185,7 +185,7 @@ export function ProjectDetailClient({
                 </div>
 
                 <div className="lg:col-span-1 space-y-6">
-                    <ProjectMembersList members={members} currentUserId={currentUserId} projectId={project.id} userRole={userRole as any} />
+                    <ProjectMembersList members={members} currentUserId={currentUserId} projectId={project.id} projectTitle={project.title} userRole={userRole as any} />
                     <ProjectCalendar projectId={project.id} startDate={new Date(project.start_date)} endDate={project.end_date ? new Date(project.end_date) : undefined} members={members} />
                 </div>
             </div>

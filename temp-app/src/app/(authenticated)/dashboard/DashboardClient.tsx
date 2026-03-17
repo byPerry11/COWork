@@ -26,6 +26,7 @@ interface UserProject {
     role: "admin" | "manager" | "member"
     progress: number
     memberCount: number
+    max_users: number
     owner_id: string
     members?: { avatar_url: string | null }[]
     membershipStatus?: "active" | "pending" | "rejected"
@@ -67,7 +68,7 @@ export function DashboardClient({
         open: boolean
         id: string
         type: 'project'
-        initialData: { title: string; description?: string | null; color?: string; project_icon?: string }
+        initialData: { title: string; description?: string | null; color?: string; project_icon?: string; max_users?: number }
     }>({ open: false, id: '', type: 'project', initialData: { title: '' } })
     const [editGroupData, setEditGroupData] = useState<{
         open: boolean
@@ -241,7 +242,7 @@ export function DashboardClient({
                                                         open: true,
                                                         id: project.id,
                                                         type: 'project',
-                                                        initialData: { title: project.title, description: project.description, color: project.color || '#6366f1', project_icon: project.project_icon || '📁' }
+                                                        initialData: { title: project.title, description: project.description, color: project.color || '#6366f1', project_icon: project.project_icon || '📁', max_users: project.max_users }
                                                     })}
                                                     onMove={(id) => setMoveToWorkspaceInfo({ open: true, entityId: id, entityType: 'project' })}
                                                 />
@@ -287,7 +288,7 @@ export function DashboardClient({
                                                         open: true,
                                                         id: project.id,
                                                         type: 'project',
-                                                        initialData: { title: project.title, description: project.description, color: project.color || '#6366f1', project_icon: project.project_icon || '📁' }
+                                                        initialData: { title: project.title, description: project.description, color: project.color || '#6366f1', project_icon: project.project_icon || '📁', max_users: project.max_users }
                                                     })}
                                                     onMove={(id) => setMoveToWorkspaceInfo({ open: true, entityId: id, entityType: 'project' })}
                                                 />

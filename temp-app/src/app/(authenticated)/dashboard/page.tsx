@@ -48,6 +48,7 @@ export default async function DashboardPage({
           status,
           owner_id,
           end_date,
+          max_users,
           checkpoints(is_completed),
           members:project_members(
             status,
@@ -117,6 +118,7 @@ export default async function DashboardPage({
       role: member.role,
       progress,
       memberCount: activeMembers.length,
+      max_users: project.max_users ?? 1,
       members: activeMembers.map((m: any) => ({ avatar_url: m.profiles?.avatar_url })),
       membershipStatus: member.status,
       end_date: project.end_date

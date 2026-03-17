@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, UserPlus, Trash2, Shield, User } from "lucide-react"
+import { Loader2, UserPlus, Trash2, Shield, User, MessageCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -35,6 +35,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { UserMultiSelect } from "@/components/user-multi-select"
 import { inviteMemberToGroup, removeMemberFromGroup } from "@/app/actions/members"
 import { supabase } from "@/lib/supabaseClient"
+import { StartGroupChatButton } from "@/components/chat/start-group-chat-button"
 
 const memberSchema = z.object({
     username: z.string().min(1, "Select a user to add"),
@@ -43,6 +44,8 @@ const memberSchema = z.object({
 
 interface ManageGroupMembersDialogProps {
     groupId: string
+    groupName: string
+    currentUserId: string
     onMemberAdded?: () => void
 }
 
@@ -56,7 +59,7 @@ interface Member {
     }
 }
 
-export function ManageGroupMembersDialog({ groupId, onMemberAdded }: ManageGroupMembersDialogProps) {
+export function ManageGroupMembersDialog({ groupId, groupName, currentUserId, onMemberAdded }: ManageGroupMembersDialogProps) {
     const [open, setOpen] = useState(false)
     const [members, setMembers] = useState<Member[]>([])
     const [loading, setLoading] = useState(false)
@@ -272,7 +275,19 @@ export function ManageGroupMembersDialog({ groupId, onMemberAdded }: ManageGroup
 
                 {/* Members List */}
                 <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Current Members</h4>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">Current Members</h4>
+                        {members.length > 0 && (
+                            <StartGroupChatButton
+                                memberUserIds={members.map(m => m.user_id)}
+                                chatName={groupName}
+                                sourceType="work_group"
+                                sourceLabel={`grupo "${groupName}"`}
+                                currentUserId={currentUserId}
+                                size="sm"
+                            />
+                        )}
+                    </div>
                     <ScrollArea className="h-[200px] border rounded-md p-2">
                         {loading ? (
                             <div className="flex justify-center p-4">
