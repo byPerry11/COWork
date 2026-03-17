@@ -63,11 +63,17 @@ export function StartGroupChatButton({
                 .select()
                 .single()
 
-            if (chatError || !newChat) {
-                throw chatError ?? new Error("No se pudo crear el chat")
+            if (chatError) {
+                console.error("[chat] Error al crear chat:", chatError)
+                toast.error("Error al crear el chat", { description: chatError.message })
+                return
+            }
+            if (!newChat) {
+                toast.error("No se recibió respuesta al crear el chat")
+                return
             }
 
-            // 2. Agregar todos los participantes
+            // 2. Agregar todos los participantes de uno en uno para evitar problemas de RLS
             const participants = allMembers.map((userId) => ({
                 chat_id: newChat.id,
                 user_id: userId,
@@ -77,14 +83,23 @@ export function StartGroupChatButton({
                 .from("chat_participants")
                 .insert(participants)
 
-            if (partError) throw partError
+            if (partError) {
+                console.error("[chat] Error al insertar participantes:", partError)
+                // Limpiar el chat huérfano
+                await supabase.from("chats").delete().eq("id", newChat.id)
+                toast.error("Error al agregar miembros al chat", { description: partError.message })
+                return
+            }
 
-            toast.success(`Chat "${chatName}" creado con ${allMembers.length} miembros`)
+            toast.success(`Chat "${chatName}" creado`, {
+                description: `${allMembers.length} miembros agregados`,
+            })
             setShowConfirm(false)
             router.push(`/chats/${newChat.id}`)
-        } catch (err) {
-            console.error(err)
-            toast.error("No se pudo crear el chat grupal")
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Error inesperado"
+            console.error("[chat] Error inesperado:", err)
+            toast.error("No se pudo crear el chat grupal", { description: message })
         } finally {
             setLoading(false)
         }
