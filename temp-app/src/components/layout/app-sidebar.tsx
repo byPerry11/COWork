@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, FolderKanban, Settings, LogOut, User, X, UsersRound, Wrench } from "lucide-react"
+import { LayoutDashboard, FolderKanban, Settings, LogOut, User, X, UsersRound, Wrench, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabaseClient"
@@ -54,6 +54,7 @@ export function AppSidebar() {
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard", label: "Projects", icon: FolderKanban },
+    { href: "/chats", label: "Mensajes", icon: MessageCircle },
     { href: "/profile", label: "Profile", icon: User },
     { href: "#", label: "Settings", icon: Settings },
   ]

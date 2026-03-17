@@ -166,3 +166,32 @@ export interface AchievementWithStatus extends Achievement {
   earned_at: string | null
 }
 
+// Chat System Types
+export type ChatType = 'direct' | 'group' | 'project' | 'work_group'
+
+export interface Chat {
+  id: string
+  type: ChatType
+  name?: string | null
+  reference_id?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatParticipant {
+  chat_id: string
+  user_id: string
+  joined_at: string
+  profile?: Profile
+}
+
+export interface Message {
+  id: string
+  chat_id: string
+  sender_id: string | null
+  content: string
+  is_edited: boolean
+  created_at: string
+  updated_at: string
+  sender?: Profile | null
+}
