@@ -180,7 +180,7 @@ export function ProjectDetailClient({
                         userRole={userRole as any}
                         currentUserId={currentUserId}
                         members={members}
-                        onRefresh={() => window.location.reload()}
+                        onRefresh={() => router.refresh()}
                     />
                 </div>
 

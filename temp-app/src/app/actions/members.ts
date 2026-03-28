@@ -394,8 +394,8 @@ export async function respondToProjectInvitation(
         }
 
         // Revalidar caché
-        revalidatePath('/dashboard')
-        revalidatePath(`/projects/${validated.project_id}`)
+        revalidatePath('/dashboard', 'layout')
+        revalidatePath(`/projects/${validated.project_id}`, 'layout')
 
         return { success: true, data: undefined }
     } catch (error) {

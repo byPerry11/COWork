@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 import {
     Dialog,
     DialogContent,
@@ -36,6 +37,7 @@ export function MoveToWorkspaceDialog({
     entityId,
     entityType,
 }: MoveToWorkspaceDialogProps) {
+    const router = useRouter()
     const [workspaces, setWorkspaces] = useState<Workspace[]>([])
     const [selectedWorkspace, setSelectedWorkspace] = useState<string>("none")
     const [isLoading, setIsLoading] = useState(false)
@@ -86,7 +88,7 @@ export function MoveToWorkspaceDialog({
             onOpenChange(false)
             
             // Reload page to reflect changes
-            window.location.reload()
+            router.refresh()
             
         } catch (error: any) {
             toast.error("Error al mover al workspace", {

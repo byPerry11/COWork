@@ -13,6 +13,7 @@ import { Folder, Heart, School, Grid2x2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { WorkspaceCard } from "@/components/workspaces/workspace-card"
 import { MoveToWorkspaceDialog } from "@/components/dashboard/MoveToWorkspaceDialog"
+import { useRouter } from "next/navigation"
 import { EditProjectDialog } from "@/components/dashboard/EditProjectDialog"
 import { EditGroupDialog } from "@/components/dashboard/EditGroupDialog"
 import { respondToProjectInvitation } from "@/app/actions/members"
@@ -61,6 +62,7 @@ export function DashboardClient({
     initialWorkspaces,
     activeWorkspaceId
 }: DashboardClientProps) {
+    const router = useRouter()
     // Get random motivational quote (stable per page load)
     const randomQuote = useMemo(() => getRandomQuote(), [])
 
@@ -87,7 +89,7 @@ export function DashboardClient({
 
             if (result.success) {
                 toast.success(accept ? "Project invitation accepted" : "Project invitation declined")
-                window.location.reload()
+                router.refresh()
             } else {
                 toast.error(result.error || "Failed to respond to invitation")
             }
@@ -145,7 +147,7 @@ export function DashboardClient({
 
                         <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                             <GlobalSearchBar />
-                            <CreationDropdown onSuccess={() => window.location.reload()} />
+                            <CreationDropdown onSuccess={() => router.refresh()} />
                         </div>
                     </div>
 

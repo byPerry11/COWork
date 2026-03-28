@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import {
     Dialog,
     DialogContent,
@@ -44,6 +45,7 @@ export interface EditGroupDialogProps {
 }
 
 export function EditGroupDialog({ open, onOpenChange, groupId, initialData }: EditGroupDialogProps) {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -83,7 +85,7 @@ export function EditGroupDialog({ open, onOpenChange, groupId, initialData }: Ed
             onOpenChange(false)
             
             // Reload page to reflect changes
-            window.location.reload()
+            router.refresh()
             
         } catch (error) {
             console.error('Unexpected error:', error)

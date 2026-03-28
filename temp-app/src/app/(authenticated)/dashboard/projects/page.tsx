@@ -1,113 +1,131 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
-import { Loader2 } from "lucide-react"
-
-import { CreateProjectDialog } from "@/components/projects/create-project-dialog"
-import { ProjectList } from "@/components/projects/project-list"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { ProjectList, ProjectWithRole } from "@/components/projects/project-list"
 import { StatsCards } from "@/components/projects/stats-cards"
+import { ProjectsClientRefresher } from "./ProjectsClientRefresher"
 
-export default function ProjectsPage() {
-    const router = useRouter()
-    const [loading, setLoading] = useState(true)
-    const [userId, setUserId] = useState<string | null>(null)
+// DB Response Type
+interface ProjectDBResponse {
+  role: 'admin' | 'manager' | 'member'
+  status: 'active' | 'pending' | 'rejected'
+  projects: {
+    id: string
+    title: string
+    description: string | null
+    category: string | null
+    color: string | null
+    project_icon: string | null
+    status: 'active' | 'completed' | 'archived'
+    start_date: string
+    owner_id: string
+    end_date: string | null
+    created_at: string
+    max_users: number
+    checkpoints: { is_completed: boolean }[]
+    project_members: {
+      user_id: string
+      profiles: { avatar_url: string | null } | null
+    }[]
+  }
+}
 
-    const [stats, setStats] = useState({
-        totalProjects: 0,
-        activeProjects: 0,
-        pendingTasks: 0,
-        avgProgress: 0
-    })
+export default async function ProjectsPage() {
+    const supabase = await createClient()
 
-    // 1. Check Auth & Get User
-    useEffect(() => {
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) {
-                router.push("/login")
-                return
-            }
-            setUserId(session.user.id)
-            fetchStats(session.user.id)
-            setLoading(false)
-        }
-        checkUser()
-    }, [router])
+    const { data: { session } } = await supabase.auth.getSession()
 
-    // 2. Fetch Stats
-    const fetchStats = async (uid: string) => {
-        try {
-            const { data, error } = await supabase
-                .from("project_members")
-                .select(`
-                projects:project_id (
-                    id,
-                    status,
-                    checkpoints (
-                        is_completed
+    if (!session) {
+        redirect("/login")
+    }
+
+    const userId = session.user.id
+
+    // Fetch all project associations
+    const { data, error } = await supabase
+        .from("project_members")
+        .select(`
+            role,
+            status,
+            projects:project_id (
+                id,
+                owner_id,
+                title,
+                description,
+                category,
+                color,
+                project_icon,
+                status,
+                start_date,
+                end_date,
+                max_users,
+                created_at,
+                checkpoints (
+                    is_completed
+                ),
+                project_members (
+                    user_id,
+                    profiles (
+                        avatar_url
                     )
                 )
-            `)
-                .eq("user_id", uid)
+            )
+        `)
+        .eq("user_id", userId)
 
-            if (error) throw error
+    if (error) {
+        console.error("Error fetching projects:", error)
+        // Handle error by showing empty or error state, here we'll just fall back to empty
+    }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const projects = data?.map((d: any) => d.projects) || []
+    const dbData = (data || []) as unknown as ProjectDBResponse[]
+    
+    // Transform data for ProjectList
+    const mappedProjects = dbData.map((item) => {
+        const checkpoints = item.projects.checkpoints || []
+        const total = checkpoints.length
+        const completed = checkpoints.filter((c) => c.is_completed).length
+        const progress = total > 0 ? (completed / total) * 100 : 0
 
-            const total = projects.length
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const active = projects.filter((p: any) => p.status === 'active').length
+        // Map members for UI
+        const members = item.projects.project_members?.map((pm) => ({
+            avatar_url: pm.profiles?.avatar_url || null
+        })) || []
 
-            let totalTasks = 0
-            let completedTasks = 0
-            let sumProgress = 0
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            projects.forEach((p: any) => {
-                const checks = p.checkpoints || []
-                const pTotal = checks.length
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const pCompleted = checks.filter((c: any) => c.is_completed).length
-
-                totalTasks += pTotal
-
-                if (pTotal > 0) {
-                    sumProgress += (pCompleted / pTotal) * 100
-                }
-                completedTasks += pCompleted
-            })
-
-            const avgProgress = total > 0 ? sumProgress / total : 0
-            const pending = totalTasks - completedTasks
-
-            setStats({
-                totalProjects: total,
-                activeProjects: active,
-                pendingTasks: pending,
-                avgProgress
-            })
-
-        } catch (err) {
-            console.error("Error fetching stats:", err)
+        return {
+            ...item.projects,
+            user_role: item.role,
+            progress,
+            total_tasks: total,
+            completed_tasks: completed,
+            members,
+            membershipStatus: item.status
         }
-    }
+    }) as ProjectWithRole[]
 
-    // Refresh mechanism
-    const [refreshKey, setRefreshKey] = useState(0)
-    const handleProjectCreated = () => {
-        setRefreshKey(prev => prev + 1)
-        if (userId) fetchStats(userId)
-    }
+    // Calculate Stats
+    const totalProjects = mappedProjects.length
+    const activeProjects = mappedProjects.filter(p => p.status === 'active').length
+    
+    let totalTasks = 0
+    let completedTasks = 0
+    let sumProgress = 0
 
-    if (loading) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        )
+    mappedProjects.forEach(p => {
+        totalTasks += p.total_tasks
+        if (p.total_tasks > 0) {
+            sumProgress += (p.completed_tasks / p.total_tasks) * 100
+        }
+        completedTasks += p.completed_tasks
+    })
+
+    const avgProgress = totalProjects > 0 ? sumProgress / totalProjects : 0
+    const pendingTasks = totalTasks - completedTasks
+
+    const stats = {
+        totalProjects,
+        activeProjects,
+        pendingTasks,
+        avgProgress
     }
 
     return (
@@ -115,19 +133,8 @@ export default function ProjectsPage() {
             {/* Main Content Area */}
             <main className="flex-1 overflow-y-auto">
                 <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8 pb-24 md:pb-6">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="flex flex-col gap-2 w-full md:w-auto">
-                            <h1 className="text-3xl font-bold tracking-tight">All Projects</h1>
-                            <p className="text-sm text-muted-foreground hidden md:block">
-                                Manage and view all your projects.
-                            </p>
-                        </div>
-                        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full md:w-auto">
-                            <CreateProjectDialog onSuccess={handleProjectCreated} />
-                        </div>
-                    </div>
-
-                    <ProjectList key={refreshKey} userId={userId!} />
+                    <ProjectsClientRefresher />
+                    <ProjectList projects={mappedProjects} />
 
                     <StatsCards {...stats} />
                 </div>

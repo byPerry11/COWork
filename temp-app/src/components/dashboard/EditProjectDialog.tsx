@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import {
     Dialog,
     DialogContent,
@@ -62,6 +63,7 @@ export interface EditProjectDialogProps {
 }
 
 export function EditProjectDialog({ open, onOpenChange, projectId, initialData }: EditProjectDialogProps) {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<FormValues>({
@@ -110,7 +112,7 @@ export function EditProjectDialog({ open, onOpenChange, projectId, initialData }
             onOpenChange(false)
             
             // Reload page to reflect changes
-            window.location.reload()
+            router.refresh()
             
         } catch (error) {
             console.error('Unexpected error:', error)
