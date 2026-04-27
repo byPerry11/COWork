@@ -84,64 +84,90 @@ export default async function DashboardPage({
       groupsQuery = groupsQuery.is('workspace_id', null)
     }
 
+  try {
     const [profileRes, projectsRes, groupsRes] = await Promise.all([
       profileQuery,
       projectsQuery,
       groupsQuery
     ])
 
-  const profile = profileRes.data
-  const displayName = profile?.display_name || profile?.username || "User"
+    if (projectsRes.error) console.error("Projects query error:", projectsRes.error)
+    if (groupsRes.error) console.error("Groups query error:", groupsRes.error)
 
-  // Process projects to calculate progress and format for client
-  const projects = (projectsRes.data || []).map((member: any) => {
-    const project = member.project
-    if (!project) return null
+    const profile = profileRes.data
+    const displayName = profile?.display_name || profile?.username || "User"
 
-    const checkpoints = project.checkpoints || []
-    const total = checkpoints.length
-    const completed = checkpoints.filter((c: any) => c.is_completed).length
-    const progress = total > 0 ? (completed / total) * 100 : 0
+    // Process projects to calculate progress and format for client
+    const projects = (projectsRes.data || []).map((member: any) => {
+      const project = member.project
+      if (!project) return null
 
-    const activeMembers = (project.members || [])
-      .filter((m: any) => m.status === 'active')
+      const checkpoints = project.checkpoints || []
+      const total = checkpoints.length
+      const completed = checkpoints.filter((c: any) => c.is_completed).length
+      const progress = total > 0 ? (completed / total) * 100 : 0
 
-    return {
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      category: project.category,
-      color: project.color,
-      project_icon: project.project_icon || "🔒",
-      status: project.status || "active",
-      owner_id: project.owner_id,
-      role: member.role,
-      progress,
-      memberCount: activeMembers.length,
-      max_users: project.max_users ?? 1,
-      members: activeMembers.map((m: any) => ({ avatar_url: m.profiles?.avatar_url })),
-      membershipStatus: member.status,
-      end_date: project.end_date
-    }
-  }).filter(Boolean)
+      const activeMembers = (project.members || [])
+        .filter((m: any) => m.status === 'active')
 
-  // Process groups
-  const workGroups = (groupsRes.data || []).map((group: any) => ({
-    id: group.id,
-    name: group.name,
-    description: group.description,
-    owner_id: group.owner_id,
-    memberCount: group.members?.length || 0
-  }))
+      return {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        category: project.category,
+        color: project.color,
+        project_icon: project.project_icon || "🔒",
+        status: project.status || "active",
+        owner_id: project.owner_id,
+        role: member.role,
+        progress,
+        memberCount: activeMembers.length,
+        max_users: project.max_users ?? 1,
+        members: activeMembers.map((m: any) => ({ 
+          avatar_url: m.profile?.avatar_url || m.profiles?.avatar_url 
+        })),
+        membershipStatus: member.status,
+        end_date: project.end_date
+      }
+    }).filter(Boolean)
 
-  return (
-    <DashboardClient
-      displayName={displayName}
-      initialProjects={projects as any}
-      initialWorkGroups={workGroups}
-      sessionUserId={userId}
-      initialWorkspaces={workspaces}
-      activeWorkspaceId={workspaceId}
-    />
-  )
+    // Process groups
+    const workGroups = (groupsRes.data || []).map((group: any) => ({
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      owner_id: group.owner_id,
+      memberCount: group.members?.length || 0
+    }))
+
+    return (
+      <DashboardClient
+        displayName={displayName}
+        initialProjects={projects as any}
+        initialWorkGroups={workGroups}
+        sessionUserId={userId}
+        initialWorkspaces={workspaces}
+        activeWorkspaceId={workspaceId}
+      />
+    )
+  } catch (error) {
+    console.error("Dashboard Critical Error:", error)
+    return (
+      <div className="flex flex-col items-center justify-center h-screen space-y-4 p-4 text-center">
+        <h2 className="text-2xl font-bold text-red-600">Error al cargar el Dashboard</h2>
+        <p className="text-muted-foreground">
+          Esto puede deberse a que la base de datos no está actualizada o hay un error de conexión.
+        </p>
+        <p className="text-sm text-gray-500 italic">
+          Tip: Ejecuta "consolidated_final_fix.sql" en tu panel de Supabase.
+        </p>
+        <a 
+          href="/dashboard"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
+          Reintentar
+        </a>
+      </div>
+    )
+  }
 }
