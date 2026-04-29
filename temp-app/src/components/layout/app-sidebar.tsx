@@ -53,7 +53,7 @@ export function AppSidebar() {
 
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard", label: "Projects", icon: FolderKanban },
+    { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
     { href: "/chats", label: "Mensajes", icon: MessageCircle },
     { href: "/profile", label: "Profile", icon: User },
     { href: "#", label: "Settings", icon: Settings },
@@ -104,7 +104,9 @@ export function AppSidebar() {
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4 space-y-1">
               {links.map((link, index) => {
                 const Icon = link.icon
-                const isActive = pathname === link.href
+                const isActive = link.href === "/dashboard" 
+                  ? pathname === "/dashboard" 
+                  : pathname === link.href || pathname.startsWith(link.href + "/")
                 return (
                   <Link
                     key={index}

@@ -80,7 +80,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-10 border-b bg-white px-4 md:px-6 py-4 dark:bg-gray-950 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-            <Link href="/dashboard">
+            <Link href="/dashboard/projects">
               <Button variant="ghost" size="icon" className="shrink-0">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
